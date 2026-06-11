@@ -1,4 +1,4 @@
-<!doctype html>
+﻿<!doctype html>
 <html lang="pt-BR">
 <head>
   <meta charset="utf-8" />
@@ -381,6 +381,72 @@
       font-size: .87rem;
     }
 
+    .target-strip {
+      margin-top: 12px;
+      border-radius: var(--radius);
+      border: 1px solid rgba(93, 214, 196, .22);
+      background: #0f141d;
+      padding: 12px;
+    }
+
+    .target-strip h3 {
+      margin: 0;
+      color: var(--accent-2);
+      font-size: 1rem;
+    }
+
+    .target-strip .poke-list {
+      margin-top: 10px;
+    }
+
+    .target-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(82px, 1fr));
+      gap: 10px;
+      margin-top: 10px;
+    }
+
+    .target-card {
+      min-height: 104px;
+      border: 1px solid rgba(255, 255, 255, .08);
+      border-radius: var(--radius);
+      background: #151b25;
+      padding: 8px 6px;
+      display: grid;
+      grid-template-rows: 54px auto auto;
+      justify-items: center;
+      align-items: center;
+      gap: 4px;
+      text-align: center;
+    }
+
+    .target-card img {
+      width: 54px;
+      height: 54px;
+      object-fit: contain;
+      image-rendering: auto;
+      filter: drop-shadow(0 8px 12px rgba(0, 0, 0, .28));
+    }
+
+    .target-card b {
+      max-width: 100%;
+      color: #eef4fb;
+      font-size: .72rem;
+      line-height: 1.08;
+      font-weight: 800;
+      overflow-wrap: anywhere;
+    }
+
+    .target-card span {
+      border-radius: 999px;
+      background: rgba(255, 203, 76, .16);
+      color: var(--accent);
+      border: 1px solid rgba(255, 203, 76, .25);
+      padding: 2px 7px;
+      font-size: .72rem;
+      font-weight: 900;
+    }
+
     .tips {
       display: grid;
       grid-template-columns: repeat(3, minmax(0, 1fr));
@@ -497,7 +563,7 @@
   </div>
 
   <script>
-    const API = "https://pokeapi.co/api/v2";
+    const GO_API = "https://pokemon-go-api.github.io/pokemon-go-api/api";
     const input = document.querySelector("#searchInput");
     const suggestionsEl = document.querySelector("#suggestions");
     const resultEl = document.querySelector("#result");
@@ -518,133 +584,244 @@
       psychic: "#f95587", bug: "#a6b91a", rock: "#b6a136", ghost: "#735797", dragon: "#6f35fc",
       dark: "#705746", steel: "#b7b7ce", fairy: "#d685ad"
     };
-
-    const typeChart = {
-      normal: { weak: ["rock", "steel"], immune: ["ghost"] },
-      fire: { strong: ["grass", "ice", "bug", "steel"], weak: ["fire", "water", "rock", "dragon"] },
-      water: { strong: ["fire", "ground", "rock"], weak: ["water", "grass", "dragon"] },
-      electric: { strong: ["water", "flying"], weak: ["electric", "grass", "dragon"], immune: ["ground"] },
-      grass: { strong: ["water", "ground", "rock"], weak: ["fire", "grass", "poison", "flying", "bug", "dragon", "steel"] },
-      ice: { strong: ["grass", "ground", "flying", "dragon"], weak: ["fire", "water", "ice", "steel"] },
-      fighting: { strong: ["normal", "ice", "rock", "dark", "steel"], weak: ["poison", "flying", "psychic", "bug", "fairy"], immune: ["ghost"] },
-      poison: { strong: ["grass", "fairy"], weak: ["poison", "ground", "rock", "ghost"], immune: ["steel"] },
-      ground: { strong: ["fire", "electric", "poison", "rock", "steel"], weak: ["grass", "bug"], immune: ["flying"] },
-      flying: { strong: ["grass", "fighting", "bug"], weak: ["electric", "rock", "steel"] },
-      psychic: { strong: ["fighting", "poison"], weak: ["psychic", "steel"], immune: ["dark"] },
-      bug: { strong: ["grass", "psychic", "dark"], weak: ["fire", "fighting", "poison", "flying", "ghost", "steel", "fairy"] },
-      rock: { strong: ["fire", "ice", "flying", "bug"], weak: ["fighting", "ground", "steel"] },
-      ghost: { strong: ["psychic", "ghost"], weak: ["dark"], immune: ["normal"] },
-      dragon: { strong: ["dragon"], weak: ["steel"], immune: ["fairy"] },
-      dark: { strong: ["psychic", "ghost"], weak: ["fighting", "dark", "fairy"] },
-      steel: { strong: ["ice", "rock", "fairy"], weak: ["fire", "water", "electric", "steel"] },
-      fairy: { strong: ["fighting", "dragon", "dark"], weak: ["fire", "poison", "steel"] }
+    const moveTranslationsPtBR = {
+      "Acid": "Ácido", "Acid Spray": "Jato Ácido", "Aerial Ace": "Ás Aéreo", "Air Cutter": "Cortador de Ar", "Air Slash": "Golpe de Ar",
+      "Ancient Power": "Poder Ancestral", "Aqua Jet": "Jato de Água", "Aqua Tail": "Cauda Aquática", "Astonish": "Espanto", "Aura Sphere": "Esfera de Aura",
+      "Avalanche": "Avalanche", "Bite": "Mordida", "Blast Burn": "Queimadura Explosiva", "Blizzard": "Nevasca", "Body Slam": "Golpe de Corpo",
+      "Bone Club": "Clava de Osso", "Brave Bird": "Pássaro Bravo", "Breaking Swipe": "Golpe Devastador", "Brick Break": "Quebra-Tijolo", "Brine": "Salmoura",
+      "Brutal Swing": "Balanço Brutal", "Bubble": "Bolha", "Bubble Beam": "Raio de Bolhas", "Bug Bite": "Mordida de Inseto", "Bug Buzz": "Zumbido",
+      "Bulldoze": "Pisotear", "Bullet Punch": "Soco Bala", "Bullet Seed": "Semente Bala", "Charge Beam": "Raio de Carga", "Charm": "Encanto",
+      "Close Combat": "Combate Corpo a Corpo", "Confusion": "Confusão", "Counter": "Contra-Atacar", "Crabhammer": "Martelo Caranguejo", "Cross Chop": "Golpe Cruzado",
+      "Cross Poison": "Veneno Cruzado", "Crunch": "Triturar", "Dark Pulse": "Pulso Sombrio", "Dazzling Gleam": "Brilho Deslumbrante", "Dig": "Cavar",
+      "Disarming Voice": "Voz Encantadora", "Discharge": "Descarga", "Doom Desire": "Desejo Oculto", "Double Kick": "Chute Duplo", "Dragon Ascent": "Ascensão do Dragão",
+      "Dragon Breath": "Sopro do Dragão", "Dragon Claw": "Garra de Dragão", "Dragon Pulse": "Pulso do Dragão", "Dragon Tail": "Cauda de Dragão", "Draining Kiss": "Beijo Drenante",
+      "Drill Peck": "Bico Broca", "Drill Run": "Corrida Broca", "Dynamic Punch": "Soco Dinâmico", "Earth Power": "Poder da Terra", "Earthquake": "Terremoto",
+      "Ember": "Brasa", "Energy Ball": "Bola de Energia", "Extrasensory": "Extrassensorial", "Fairy Wind": "Vento de Fada", "Feint Attack": "Ataque Furtivo",
+      "Fire Blast": "Explosão de Fogo", "Fire Fang": "Presa de Fogo", "Fire Punch": "Soco de Fogo", "Fire Spin": "Giro de Fogo", "Flame Burst": "Rajada de Chamas",
+      "Flame Charge": "Carga de Chamas", "Flame Wheel": "Roda de Fogo", "Flamethrower": "Lança-Chamas", "Flash Cannon": "Canhão de Luz", "Focus Blast": "Explosão Focalizada",
+      "Force Palm": "Palma da Força", "Foul Play": "Jogo Sujo", "Frenzy Plant": "Planta Mortal", "Frost Breath": "Sopro Congelante", "Fury Cutter": "Cortador de Fúria",
+      "Future Sight": "Visão do Futuro", "Giga Drain": "Giga Drenagem", "Grass Knot": "Nó de Grama", "Gunk Shot": "Tiro de Sujeira", "Gust": "Rajada",
+      "Gyro Ball": "Bola Giroscópica", "Heat Wave": "Onda de Calor", "Heavy Slam": "Impacto Pesado", "Hex": "Feitiço", "Hidden Power": "Poder Oculto",
+      "High Horsepower": "Alta Cavalaria", "Horn Attack": "Ataque de Chifre", "Hurricane": "Furacão", "Hydro Cannon": "Hidrocanhão", "Hydro Pump": "Hidrobomba",
+      "Hyper Beam": "Hiper Raio", "Ice Beam": "Raio de Gelo", "Ice Fang": "Presa de Gelo", "Ice Punch": "Soco de Gelo", "Ice Shard": "Estilhaço de Gelo",
+      "Icy Wind": "Vento Gelado", "Incinerate": "Incinerar", "Iron Head": "Cabeça de Ferro", "Iron Tail": "Cauda de Ferro", "Karate Chop": "Golpe de Karatê",
+      "Leaf Blade": "Lâmina de Folha", "Leaf Tornado": "Tornado de Folhas", "Lick": "Lambida", "Lock-On": "Mirar", "Low Kick": "Chute Baixo",
+      "Low Sweep": "Rasteira", "Magical Leaf": "Folha Mágica", "Magnet Bomb": "Bomba Magnética", "Megahorn": "Megachifre", "Metal Claw": "Garra de Metal",
+      "Meteor Mash": "Punho Meteoro", "Mirror Shot": "Tiro Espelhado", "Moonblast": "Explosão Lunar", "Mud Bomb": "Bomba de Lama", "Mud Shot": "Tiro de Lama",
+      "Mud-Slap": "Tapa de Lama", "Night Slash": "Corte Noturno", "Obstruct": "Obstrução", "Ominous Wind": "Vento Ominoso", "Outrage": "Ultraje",
+      "Overheat": "Superaquecimento", "Payback": "Retaliação", "Peck": "Bicada", "Play Rough": "Jogo Duro", "Poison Fang": "Presa Venenosa",
+      "Poison Jab": "Golpe Venenoso", "Poison Sting": "Ferrão Venenoso", "Power Gem": "Gema de Poder", "Power Whip": "Chicote Poderoso", "Powder Snow": "Neve em Pó",
+      "Psybeam": "Psicorraio", "Psychic": "Psíquico", "Psycho Boost": "Impulso Psíquico", "Psycho Cut": "Corte Psíquico", "Psyshock": "Choque Psíquico",
+      "Psystrike": "Ataque Psíquico", "Quick Attack": "Ataque Rápido", "Razor Leaf": "Folha Navalha", "Rest": "Descanso", "Return": "Retorno",
+      "Rock Blast": "Explosão de Rocha", "Rock Slide": "Deslizamento de Pedras", "Rock Smash": "Quebra-Rocha", "Rock Throw": "Arremesso de Rocha", "Rock Tomb": "Tumba de Rochas",
+      "Rock Wrecker": "Demolidor de Rochas", "Rollout": "Rolagem", "Sacred Fire": "Fogo Sagrado", "Sand Attack": "Ataque de Areia", "Sand Tomb": "Tumba de Areia",
+      "Scald": "Escaldar", "Scorching Sands": "Areias Escaldantes", "Seed Bomb": "Bomba de Sementes", "Shadow Ball": "Bola Sombria", "Shadow Claw": "Garra Sombria",
+      "Shadow Punch": "Soco Sombrio", "Shadow Sneak": "Sombra Furtiva", "Signal Beam": "Raio Sinalizador", "Skull Bash": "Cabeçada", "Sky Attack": "Ataque Aéreo",
+      "Sludge": "Lodo", "Sludge Bomb": "Bomba de Lodo", "Sludge Wave": "Onda de Lodo", "Smack Down": "Derrubada", "Snarl": "Rosnado",
+      "Solar Beam": "Raio Solar", "Spark": "Faísca", "Steel Wing": "Asa de Aço", "Stomp": "Pisotear", "Stone Edge": "Gume de Pedra",
+      "Struggle": "Esforço", "Struggle Bug": "Inseto Lutador", "Submission": "Submissão", "Superpower": "Superpoder", "Surf": "Surfe",
+      "Swift": "Estrela Cadente", "Tackle": "Investida", "Take Down": "Derrubada", "Thunder": "Trovão", "Thunder Fang": "Presa de Trovão",
+      "Thunder Punch": "Soco do Trovão", "Thunder Shock": "Choque do Trovão", "Thunderbolt": "Raio", "Trailblaze": "Abrir Caminho", "Tri Attack": "Triataque",
+      "Twister": "Tornado", "V-create": "V de Fogo", "Vine Whip": "Chicote de Vinha", "Volt Switch": "Troca Elétrica", "Water Gun": "Jato d'Água",
+      "Water Pulse": "Pulso d'Água", "Waterfall": "Cachoeira", "Weather Ball": "Bola Climática", "Wild Charge": "Carga Selvagem", "Wing Attack": "Ataque de Asa",
+      "Wrap": "Enrolar", "X-Scissor": "Tesoura X", "Zap Cannon": "Canhão Elétrico", "Zen Headbutt": "Cabeçada Zen"
     };
 
-    const sampleByType = {
-      normal: ["Snorlax", "Blissey", "Pidgeot"], fire: ["Charizard", "Talonflame", "Volcarona"],
-      water: ["Swampert", "Gyarados", "Greninja"], electric: ["Raikou", "Magnezone", "Zapdos"],
-      grass: ["Venusaur", "Roserade", "Kartana"], ice: ["Mamoswine", "Weavile", "Lapras"],
-      fighting: ["Machamp", "Lucario", "Conkeldurr"], poison: ["Nidoking", "Toxicroak", "Gengar"],
-      ground: ["Garchomp", "Excadrill", "Groudon"], flying: ["Dragonite", "Togekiss", "Skarmory"],
-      psychic: ["Mewtwo", "Metagross", "Gardevoir"], bug: ["Scizor", "Heracross", "Pinsir"],
-      rock: ["Tyranitar", "Rhyperior", "Rampardos"], ghost: ["Giratina", "Chandelure", "Gengar"],
-      dragon: ["Rayquaza", "Salamence", "Haxorus"], dark: ["Umbreon", "Hydreigon", "Darkrai"],
-      steel: ["Metagross", "Melmetal", "Dialga"], fairy: ["Togekiss", "Sylveon", "Azumarill"]
-    };
-
-    const quickMoves = {
-      fire: ["Fire Fang", "Incinerate", "Fire Spin"], water: ["Water Gun", "Waterfall", "Bubble"],
-      electric: ["Thunder Shock", "Volt Switch", "Spark"], grass: ["Vine Whip", "Razor Leaf", "Bullet Seed"],
-      ice: ["Powder Snow", "Ice Shard", "Frost Breath"], fighting: ["Counter", "Karate Chop", "Force Palm"],
-      poison: ["Poison Jab", "Poison Sting", "Acid"], ground: ["Mud Shot", "Mud-Slap", "Sand Attack"],
-      flying: ["Wing Attack", "Gust", "Air Slash"], psychic: ["Psycho Cut", "Confusion", "Zen Headbutt"],
-      bug: ["Bug Bite", "Fury Cutter", "Struggle Bug"], rock: ["Smack Down", "Rock Throw", "Rollout"],
-      ghost: ["Shadow Claw", "Hex", "Lick"], dragon: ["Dragon Breath", "Dragon Tail", "Dragon Rage"],
-      dark: ["Snarl", "Bite", "Sucker Punch"], steel: ["Bullet Punch", "Metal Claw", "Steel Wing"],
-      fairy: ["Charm", "Fairy Wind", "Tackle"], normal: ["Lock-On", "Quick Attack", "Tackle"]
-    };
-
-    const chargedMoves = {
-      fire: ["Flamethrower", "Overheat", "Wild Charge"], water: ["Hydro Cannon", "Surf", "Aqua Tail"],
-      electric: ["Wild Charge", "Thunderbolt", "Discharge"], grass: ["Frenzy Plant", "Leaf Blade", "Power Whip"],
-      ice: ["Avalanche", "Ice Beam", "Icy Wind"], fighting: ["Aura Sphere", "Dynamic Punch", "Close Combat"],
-      poison: ["Sludge Bomb", "Poison Fang", "Sludge Wave"], ground: ["Earth Power", "Earthquake", "High Horsepower"],
-      flying: ["Sky Attack", "Brave Bird", "Aerial Ace"], psychic: ["Psystrike", "Psychic", "Psyshock"],
-      bug: ["X-Scissor", "Megahorn", "Bug Buzz"], rock: ["Rock Slide", "Stone Edge", "Rock Wrecker"],
-      ghost: ["Shadow Ball", "Shadow Punch", "Ominous Wind"], dragon: ["Outrage", "Dragon Claw", "Breaking Swipe"],
-      dark: ["Dark Pulse", "Crunch", "Foul Play"], steel: ["Meteor Mash", "Iron Head", "Flash Cannon"],
-      fairy: ["Moonblast", "Play Rough", "Dazzling Gleam"], normal: ["Body Slam", "Hyper Beam", "Return"]
-    };
-
-    const curatedGoMoves = {
-      "arcanine-hisui": { fast: "Fire Fang", charged: "Rock Slide + Wild Charge", note: "Use Fogo para pressão constante e Pedra/Elétrico para surpreender voadores e águas." },
-      arcanine: { fast: "Fire Fang", charged: "Flamethrower + Wild Charge", note: "Boa cobertura: Fogo para STAB e Wild Charge para água/voador." },
-      charizard: { fast: "Wing Attack", charged: "Blast Burn + Dragon Claw", note: "Carrega rápido, força escudos e mantém pressão." },
-      swampert: { fast: "Mud Shot", charged: "Hydro Cannon + Earthquake", note: "Mud Shot gera energia muito rápido; ótimo para ritmo de batalha." },
-      venusaur: { fast: "Vine Whip", charged: "Frenzy Plant + Sludge Bomb", note: "Pressiona águas/terras e ainda ameaça fadas com Veneno." },
-      mewtwo: { fast: "Psycho Cut", charged: "Psystrike + Shadow Ball", note: "Psycho Cut acelera energia; Psystrike é o golpe principal." },
-      metagross: { fast: "Bullet Punch", charged: "Meteor Mash + Earthquake", note: "Excelente contra Fada, Gelo e Pedra; Earthquake cobre Aço/Fogo." },
-      dragonite: { fast: "Dragon Breath", charged: "Dragon Claw + Superpower", note: "Dragon Breath dá dano constante; Dragon Claw pressiona escudos." },
-      gengar: { fast: "Shadow Claw", charged: "Shadow Ball + Sludge Bomb", note: "Muito dano, pouca resistência: jogue com troca e escudos." },
-      pikachu: { fast: "Thunder Shock", charged: "Wild Charge + Surf", note: "Elétrico rápido com cobertura de Água quando disponível." }
+    const fallbackMoveWords = {
+      acid: "ácido", aerial: "aéreo", air: "ar", aqua: "aquático", attack: "ataque", aura: "aura", ball: "bola", beam: "raio",
+      bite: "mordida", blast: "explosão", body: "corpo", bone: "osso", brave: "bravo", brick: "tijolo", bug: "inseto",
+      bullet: "bala", charge: "carga", claw: "garra", close: "próximo", combat: "combate", counter: "contra-ataque", cross: "cruzado",
+      crunch: "triturar", dark: "sombrio", dragon: "dragão", dynamic: "dinâmico", earth: "terra", earthquake: "terremoto", electric: "elétrico",
+      fang: "presa", fire: "fogo", flame: "chama", flash: "luz", focus: "foco", foul: "sujo", grass: "planta", head: "cabeça",
+      heavy: "pesado", hidden: "oculto", horse: "cavalo", hydro: "hidro", ice: "gelo", iron: "ferro", leaf: "folha", low: "baixo",
+      metal: "metal", meteor: "meteoro", mud: "lama", night: "noturno", poison: "veneno", power: "poder", psychic: "psíquico",
+      psycho: "psíquico", punch: "soco", quick: "rápido", razor: "navalha", rock: "rocha", shadow: "sombrio", shock: "choque",
+      slap: "tapa", slide: "deslizamento", sludge: "lodo", solar: "solar", spark: "faísca", steel: "aço", stone: "pedra",
+      superpower: "superpoder", tail: "cauda", thunder: "trovão", vine: "vinha", water: "água", whip: "chicote", wild: "selvagem", wing: "asa", zen: "zen"
     };
 
     const aliases = new Map([
-      ["arcanine de hisui", "arcanine-hisui"],
-      ["arcanine hisui", "arcanine-hisui"],
-      ["hisuian arcanine", "arcanine-hisui"],
-      ["growlithe de hisui", "growlithe-hisui"],
-      ["growlithe hisui", "growlithe-hisui"],
-      ["ninetales de alola", "ninetales-alola"],
-      ["ninetales alola", "ninetales-alola"],
-      ["raichu de alola", "raichu-alola"],
-      ["raichu alola", "raichu-alola"],
-      ["marowak de alola", "marowak-alola"],
-      ["marowak alola", "marowak-alola"]
+      ["arcanine de hisui", "arcanine-hisuian"],
+      ["arcanine hisui", "arcanine-hisuian"],
+      ["arcanine-hisui", "arcanine-hisuian"],
+      ["hisuian arcanine", "arcanine-hisuian"],
+      ["growlithe de hisui", "growlithe-hisuian"],
+      ["growlithe hisui", "growlithe-hisuian"],
+      ["growlithe-hisui", "growlithe-hisuian"],
+      ["ninetales de alola", "ninetales-alolan"],
+      ["ninetales alola", "ninetales-alolan"],
+      ["ninetales-alola", "ninetales-alolan"],
+      ["raichu de alola", "raichu-alolan"],
+      ["raichu alola", "raichu-alolan"],
+      ["raichu-alola", "raichu-alolan"],
+      ["marowak de alola", "marowak-alolan"],
+      ["marowak alola", "marowak-alolan"],
+      ["marowak-alola", "marowak-alolan"]
     ]);
 
     let pokemonList = [];
+    let pokemonIndex = new Map();
+    let typeData = new Map();
     let activeSuggestion = -1;
+    let dataReady = null;
 
-    function normalize(value) {
-      return value
+    function normalize(value = "") {
+      return String(value)
         .toLowerCase()
         .normalize("NFD")
         .replace(/[\u0300-\u036f]/g, "")
         .replace(/[._]/g, "-")
+        .replace(/['’]/g, "")
         .replace(/\s+/g, " ")
         .trim();
     }
 
-    function displayName(name) {
-      return name
+    function slugify(value = "") {
+      return normalize(value).replace(/\s+/g, "-");
+    }
+
+    function typeSlug(value = "") {
+      return String(value)
+        .replace(/^POKEMON_TYPE_/i, "")
+        .toLowerCase()
+        .replace(/_/g, "-");
+    }
+
+    function displayName(name = "") {
+      return String(name)
         .split("-")
+        .filter(Boolean)
         .map(part => part.charAt(0).toUpperCase() + part.slice(1))
         .join(" ");
     }
 
+    function goName(pokemon) {
+      return pokemon?.names?.English || pokemon?.id || "Pokémon";
+    }
+
+    function goDisplayName(pokemon) {
+      const base = goName(pokemon);
+      const form = String(pokemon?.formId || "").replace(`${pokemon?.id || ""}_`, "");
+      if (!form || form === pokemon?.id || form === "NORMAL") return base;
+      const formLabel = displayName(slugify(form));
+      if (normalize(base).includes(normalize(formLabel))) return base;
+      return `${base} ${formLabel}`;
+    }
+
+    function pokemonTypes(pokemon) {
+      return [pokemon.primaryType, pokemon.secondaryType]
+        .filter(Boolean)
+        .map(item => typeSlug(item.type || item.names?.English || item.typeName));
+    }
+
+    function moveType(move) {
+      return typeSlug(move?.type?.type || move?.type?.names?.English || "normal");
+    }
+
+    function fallbackMoveNamePtBR(move) {
+      return String(move?.id || "golpe")
+        .replace(/_FAST$/i, "")
+        .toLowerCase()
+        .split("_")
+        .filter(Boolean)
+        .map(part => fallbackMoveWords[part] || displayName(part))
+        .join(" ")
+        .replace(/^./, char => char.toUpperCase());
+    }
+
+    function moveName(move) {
+      const english = move?.names?.English || displayName(slugify(move?.id || "Golpe"));
+      return move?.names?.Portuguese || move?.names?.["Portuguese (Brazil)"] || moveTranslationsPtBR[english] || fallbackMoveNamePtBR(move);
+    }
+
+    function addIndex(key, pokemon) {
+      const normalized = slugify(key);
+      if (normalized && !pokemonIndex.has(normalized)) pokemonIndex.set(normalized, pokemon);
+    }
+
     function apiName(value) {
       const term = normalize(value);
-      if (/^\d+$/.test(term)) return term;
+      if (!term) return "";
       if (aliases.has(term)) return aliases.get(term);
       const compact = term.replace(/\s+/g, "-");
       return aliases.get(compact) || compact;
     }
 
+    function regionalSearchTerms(formSlug) {
+      const terms = [];
+      if (formSlug.includes("hisuian")) terms.push("hisui", "de hisui");
+      if (formSlug.includes("alolan")) terms.push("alola", "de alola");
+      if (formSlug.includes("galarian")) terms.push("galar", "de galar");
+      if (formSlug.includes("paldean")) terms.push("paldea", "de paldea");
+      return terms.join(" ");
+    }
+
+    function findPokemon(term) {
+      const compact = slugify(term);
+      const exact = pokemonIndex.get(term) || pokemonIndex.get(compact);
+      if (exact) return exact;
+      const normalized = normalize(term);
+      const hit = pokemonList.find(p => p.search.includes(normalized) || p.name.includes(compact));
+      return hit?.pokemon || null;
+    }
+
+    async function fetchJson(url) {
+      const res = await fetch(url);
+      if (!res.ok) throw new Error(`Falha ao carregar ${url}`);
+      return res.json();
+    }
+
     async function loadList() {
-      try {
-        const res = await fetch(`${API}/pokemon?limit=20000`);
-        const data = await res.json();
-        pokemonList = data.results.map((p, index) => ({
-          name: p.name,
-          label: displayName(p.name),
-          search: normalize(p.name),
-          index: index + 1
-        }));
-        statusEl.textContent = `${pokemonList.length.toLocaleString("pt-BR")} opções prontas`;
-      } catch (err) {
-        statusEl.textContent = "Busca online indisponível";
-      }
+      dataReady = (async () => {
+        try {
+          const [pokedex, types] = await Promise.all([
+            fetchJson(`${GO_API}/pokedex.json`),
+            fetchJson(`${GO_API}/types.json`)
+          ]);
+
+          typeData = new Map(types.map(type => [typeSlug(type.type), {
+            weakFrom: (type.doubleDamageFrom || []).map(typeSlug),
+            resistFrom: (type.halfDamageFrom || []).map(typeSlug),
+            immuneFrom: (type.noDamageFrom || []).map(typeSlug)
+          }]));
+
+          const allPokemon = pokedex.flatMap(pokemon => [
+            pokemon,
+            ...Object.values(pokemon.regionForms || {})
+          ]);
+
+          pokemonIndex = new Map();
+          pokemonList = allPokemon.map((pokemon, index) => {
+            const name = goName(pokemon);
+            const label = goDisplayName(pokemon);
+            const slug = slugify(label);
+            const baseSlug = slugify(name);
+            const idSlug = slugify(pokemon.id);
+            const formSlug = slugify(String(pokemon.formId || "").replace(/_/g, " "));
+            const entry = {
+              pokemon,
+              name: slug,
+              label,
+              search: normalize(`${label} ${name} ${pokemon.id} ${pokemon.formId} ${pokemon.dexNr} ${regionalSearchTerms(formSlug)}`),
+              index: pokemon.dexNr || index + 1
+            };
+            [slug, baseSlug, idSlug, formSlug, `${baseSlug}-${formSlug}`].forEach(key => addIndex(key, pokemon));
+            if (!pokemonIndex.has(String(pokemon.dexNr))) pokemonIndex.set(String(pokemon.dexNr), pokemon);
+            return entry;
+          }).sort((a, b) => a.index - b.index || a.label.localeCompare(b.label));
+
+          aliases.forEach((target, alias) => {
+            const pokemon = pokemonIndex.get(target);
+            if (pokemon) addIndex(alias, pokemon);
+          });
+
+          statusEl.textContent = `${pokemonList.length.toLocaleString("pt-BR")} opções prontas`;
+        } catch (err) {
+          statusEl.textContent = "Busca online indisponível";
+          throw err;
+        }
+      })();
+      return dataReady;
     }
 
     function renderSuggestions() {
@@ -657,102 +834,165 @@
       }
       const aliasHits = [...aliases.entries()]
         .filter(([label]) => label.includes(term))
-        .map(([label, name]) => ({ name, label: `${displayName(name)} (${label})`, index: "forma" }));
+        .map(([label, name]) => {
+          const pokemon = pokemonIndex.get(name);
+          return pokemon ? { pokemon, name, label: `${goDisplayName(pokemon)} (${label})`, index: "forma" } : null;
+        })
+        .filter(Boolean);
       const hits = pokemonList
         .filter(p => p.search.includes(term) || String(p.index) === term)
         .slice(0, 8);
-      const merged = [...aliasHits, ...hits].filter((hit, idx, arr) => arr.findIndex(x => x.name === hit.name) === idx).slice(0, 8);
+      const merged = [...aliasHits, ...hits].filter((hit, idx, arr) => arr.findIndex(x => x.pokemon === hit.pokemon) === idx).slice(0, 8);
       suggestionsEl.innerHTML = merged.map((p, idx) => `
         <button class="suggestion" type="button" data-name="${p.name}" data-idx="${idx}" role="option">
-          <span>${p.label || displayName(p.name)}</span>
+          <span>${p.label || goDisplayName(p.pokemon)}</span>
           <small>${typeof p.index === "number" ? "#" + String(p.index).padStart(3, "0") : p.index}</small>
         </button>
       `).join("");
       suggestionsEl.classList.toggle("show", merged.length > 0);
     }
 
-    function effectiveness(attackType, defenderTypes) {
-      let value = 1;
-      const data = typeChart[attackType] || {};
-      defenderTypes.forEach(type => {
-        if (data.immune?.includes(type)) value *= 0;
-        else if (data.strong?.includes(type)) value *= 2;
-        else if (data.weak?.includes(type)) value *= .5;
-      });
-      return value;
+    function incomingEffectiveness(attackType, defenderTypes) {
+      return defenderTypes.reduce((value, defenderType) => {
+        const data = typeData.get(defenderType) || {};
+        if (data.immuneFrom?.includes(attackType)) return value * 0;
+        if (data.weakFrom?.includes(attackType)) return value * 2;
+        if (data.resistFrom?.includes(attackType)) return value * 0.5;
+        return value;
+      }, 1);
     }
 
     function incomingWeaknesses(types) {
       return Object.keys(typeNames)
-        .map(type => ({ type, value: effectiveness(type, types) }))
+        .map(type => ({ type, value: incomingEffectiveness(type, types) }))
         .filter(item => item.value > 1)
-        .sort((a, b) => b.value - a.value);
+        .sort((a, b) => b.value - a.value || typeNames[a.type].localeCompare(typeNames[b.type]));
     }
 
-    function attackingStrengths(types) {
-      const seen = new Map();
-      types.forEach(type => {
-        (typeChart[type]?.strong || []).forEach(target => {
-          seen.set(target, Math.max(seen.get(target) || 0, 2));
-        });
+    function incomingResistances(types) {
+      return Object.keys(typeNames)
+        .map(type => ({ type, value: incomingEffectiveness(type, types) }))
+        .filter(item => item.value < 1)
+        .sort((a, b) => a.value - b.value || typeNames[a.type].localeCompare(typeNames[b.type]));
+    }
+
+    function scoreFastMove(move, types) {
+      const combat = move.combat || {};
+      const turns = Math.max(1, combat.turns || Math.round((move.durationMs || 1000) / 500));
+      const power = combat.power ?? move.power ?? 0;
+      const energy = combat.energy ?? move.energy ?? 0;
+      const stab = types.includes(moveType(move)) ? 1.2 : 1;
+      return ((power / turns) * 1.15 + (energy / turns) * 1.35) * stab;
+    }
+
+    function scoreChargedMove(move, types) {
+      const combat = move.combat || {};
+      const power = combat.power ?? move.power ?? 0;
+      const energy = Math.abs(combat.energy ?? move.energy ?? 100) || 100;
+      const stab = types.includes(moveType(move)) ? 1.2 : 1;
+      const buffBonus = combat.buffs ? 8 : 0;
+      return ((power / energy) * 100 + Math.max(0, 70 - energy) * 0.25 + buffBonus) * stab;
+    }
+
+    function uniqueMoves(moves) {
+      const seen = new Set();
+      return moves.filter(move => {
+        const key = move?.id || moveName(move);
+        if (seen.has(key)) return false;
+        seen.add(key);
+        return true;
       });
-      return [...seen.keys()];
     }
 
-    function pickMoves(name, types) {
-      if (curatedGoMoves[name]) return { ...curatedGoMoves[name], source: "curado" };
-      const primary = types[0] || "normal";
-      const secondary = types[1] || primary;
-      const fast = quickMoves[primary]?.[0] || "Quick Attack";
-      const chargedA = chargedMoves[primary]?.[0] || "Body Slam";
-      const chargedB = secondary !== primary ? (chargedMoves[secondary]?.[0] || chargedMoves[primary]?.[1]) : (chargedMoves[primary]?.[1] || chargededMoves?.normal?.[0] || "Return");
+    function pickMoves(pokemon, types) {
+      const fastMoves = uniqueMoves([
+        ...Object.values(pokemon.quickMoves || {}),
+        ...Object.values(pokemon.eliteQuickMoves || {})
+      ]).sort((a, b) => scoreFastMove(b, types) - scoreFastMove(a, types));
+      const chargedMoves = uniqueMoves([
+        ...Object.values(pokemon.cinematicMoves || {}),
+        ...Object.values(pokemon.eliteCinematicMoves || {})
+      ]).sort((a, b) => scoreChargedMove(b, types) - scoreChargedMove(a, types));
+      const fast = fastMoves[0];
+      const charged = chargedMoves.slice(0, 2);
+      const attackTypes = [...new Set([fast, ...charged].filter(Boolean).map(moveType))];
+      const fastLabel = fast ? `${moveName(fast)} (${typeNames[moveType(fast)] || moveType(fast)})` : "Sem ataque rápido na API";
+      const chargedLabel = charged.length ? charged.map(move => `${moveName(move)} (${typeNames[moveType(move)] || moveType(move)})`).join(" + ") : "Sem ataque carregado na API";
+      const chargedTypes = charged.map(move => typeNames[moveType(move)]).filter(Boolean).join(" / ");
       return {
-        fast,
-        charged: `${chargedA} + ${chargedB}`,
-        source: "estimado por tipo",
-        note: `Priorize golpes ${typeNames[primary]} para bônus de mesmo tipo. O segundo carregado cobre ${typeNames[secondary] || typeNames[primary]}.`
+        fast: fastLabel,
+        charged: chargedLabel,
+        attackTypes: attackTypes.length ? attackTypes : types,
+        source: "Pokémon GO API",
+        note: chargedTypes
+          ? `Seleção calculada pelos golpes disponíveis na API, priorizando eficiência em combate, energia e bônus de mesmo tipo. Cobertura: ${chargedTypes}.`
+          : "Seleção calculada apenas com os golpes disponíveis na Pokémon GO API."
       };
     }
 
-    function statLabel(name) {
-      return ({ hp: "HP", attack: "ATQ", defense: "DEF", "special-attack": "ESP", "special-defense": "RES", speed: "VEL" })[name] || name;
+    function easyTargets(currentPokemon, attackTypes) {
+      const seen = new Set();
+      return pokemonList
+        .map(entry => entry.pokemon)
+        .filter(target => target && target.formId !== currentPokemon.formId)
+        .map(target => {
+          const targetTypes = pokemonTypes(target);
+          const best = attackTypes
+            .map(type => ({ type, value: incomingEffectiveness(type, targetTypes) }))
+            .sort((a, b) => b.value - a.value)[0];
+          return { pokemon: target, type: best?.type, value: best?.value || 1 };
+        })
+        .filter(target => target.value > 1)
+        .sort((a, b) => b.value - a.value || (a.pokemon.dexNr || 9999) - (b.pokemon.dexNr || 9999))
+        .filter(target => {
+          const key = goDisplayName(target.pokemon);
+          if (seen.has(key)) return false;
+          seen.add(key);
+          return true;
+        })
+        .slice(0, 10);
     }
 
-    function renderPokemon(pokemon, species) {
-      const types = pokemon.types.map(t => t.type.name);
-      const moves = pickMoves(pokemon.name, types);
+    function goStats(pokemon) {
+      return [
+        { label: "HP", value: pokemon.stats?.stamina || 0 },
+        { label: "ATQ", value: pokemon.stats?.attack || 0 },
+        { label: "DEF", value: pokemon.stats?.defense || 0 }
+      ];
+    }
+
+    function renderPokemon(pokemon) {
+      const types = pokemonTypes(pokemon);
+      const moves = pickMoves(pokemon, types);
       const weaknesses = incomingWeaknesses(types);
-      const strengths = attackingStrengths(types);
-      const image =
-        pokemon.sprites.other?.["official-artwork"]?.front_default ||
-        pokemon.sprites.other?.home?.front_default ||
-        pokemon.sprites.front_default ||
-        "";
-      const idLabel = pokemon.id < 10000 ? `#${String(pokemon.id).padStart(3, "0")}` : "Forma especial";
-      const flavor = species?.flavor_text_entries?.find(f => f.language.name === "en")?.flavor_text?.replace(/\s+/g, " ") || "Resumo rápido para consulta durante montagem de time.";
-      const strongSamples = strengths.flatMap(type => sampleByType[type] || []).filter((v, i, arr) => arr.indexOf(v) === i).slice(0, 8);
-      const weakSamples = weaknesses.flatMap(w => sampleByType[w.type] || []).filter((v, i, arr) => arr.indexOf(v) === i).slice(0, 8);
-      const bestAttackTypes = strengths.slice(0, 6).map(typeChip).join("");
-      const weakTypeChips = weaknesses.slice(0, 6).map(w => typeChip(w.type, w.value === 4 ? "4x" : "2x")).join("");
+      const resistances = incomingResistances(types);
+      const image = pokemon.assets?.image || pokemon.assetForms?.find(form => !form.costume)?.image || "";
+      const idLabel = pokemon.dexNr ? `#${String(pokemon.dexNr).padStart(3, "0")}` : "Forma especial";
+      const flavor = `Dados oficiais do Pokémon GO: tipos, atributos, resistências, fraquezas e golpes vêm da Pokémon GO API.`;
+      const weakTypeChips = weaknesses.map(w => typeChip(w.type, w.value === 4 ? "4x" : "2x")).join("");
+      const resistTypeChips = resistances.map(r => typeChip(r.type, r.value === 0 ? "0x" : r.value === 0.25 ? "1/4x" : "1/2x")).join("");
+      const targets = easyTargets(pokemon, moves.attackTypes);
+      const targetTags = targets.map(target => { const targetImage = target.pokemon.assets?.image || target.pokemon.assetForms?.find(form => !form.costume)?.image || ""; return `<div class="target-card">${targetImage ? `<img src="${targetImage}" alt="${goDisplayName(target.pokemon)}">` : ""}<b>${goDisplayName(target.pokemon)}</b><span>${target.value === 4 ? "4x" : "2x"}</span></div>`; }).join("");
+      const targetTypes = [...new Set(targets.map(target => target.type).filter(Boolean))].slice(0, 4).map(type => typeNames[type]).join(" / ");
 
       resultEl.innerHTML = `
         <aside class="hero-card">
           <div class="poke-stage">
-            ${image ? `<img class="pokemon-img" src="${image}" alt="${displayName(pokemon.name)}">` : ""}
+            ${image ? `<img class="pokemon-img" src="${image}" alt="${goDisplayName(pokemon)}">` : ""}
           </div>
           <div class="identity">
             <div class="name-row">
               <div>
-                <h2>${displayName(pokemon.name)}</h2>
+                <h2>${goDisplayName(pokemon)}</h2>
                 <div class="chips" style="margin-top:10px">${types.map(typeChip).join("")}</div>
               </div>
               <div class="dex">${idLabel}</div>
             </div>
             <p class="note">${flavor}</p>
             <div class="stats">
-              ${pokemon.stats.map(s => {
-                const pct = Math.min(100, Math.round((s.base_stat / 180) * 100));
-                return `<div class="stat"><span>${statLabel(s.stat.name)}</span><div class="bar"><span style="--w:${pct}%"></span></div><b>${s.base_stat}</b></div>`;
+              ${goStats(pokemon).map(s => {
+                const pct = Math.min(100, Math.round((s.value / 300) * 100));
+                return `<div class="stat"><span>${s.label}</span><div class="bar"><span style="--w:${pct}%"></span></div><b>${s.value}</b></div>`;
               }).join("")}
             </div>
           </div>
@@ -760,15 +1000,15 @@
 
         <section class="stack">
           <div class="info-panel">
-            <h2 class="panel-title">Melhor combinação rápida <span>${moves.source}</span></h2>
+            <h2 class="panel-title">Melhores ataques <span>${moves.source}</span></h2>
             <div class="move-grid">
               <div class="move">
-                <small>Ataque ágil</small>
+                <small>Melhor ataque rápido</small>
                 <b>${moves.fast}</b>
-                <span class="mini">Use para gerar energia e manter pressão constante.</span>
+                <span class="mini">Melhor opção calculada pelos golpes disponíveis na API.</span>
               </div>
               <div class="move">
-                <small>Ataques carregados</small>
+                <small>Melhores ataques carregados</small>
                 <b>${moves.charged}</b>
                 <span class="mini">Tenha um golpe principal e um de cobertura quando possível.</span>
               </div>
@@ -780,23 +1020,28 @@
             <h2 class="panel-title">Vantagem de tipos</h2>
             <div class="matrix">
               <div class="list-card good">
-                <h3>Mais forte contra</h3>
-                <div class="chips">${bestAttackTypes || "<span class='mini'>Sem vantagem ofensiva direta por tipo.</span>"}</div>
-                <div class="poke-list">${strongSamples.map(p => `<span class="poke-tag">${p}</span>`).join("") || "<span class='mini'>Use como atacante neutro.</span>"}</div>
+                <h3>Resistências</h3>
+                <div class="chips">${resistTypeChips || "<span class='mini'>Sem resistências registradas na API.</span>"}</div>
+                <div class="poke-list"><span class="mini">Tipos de golpe que causam menos dano contra este Pokémon.</span></div>
               </div>
               <div class="list-card bad">
-                <h3>Mais fraco contra</h3>
-                <div class="chips">${weakTypeChips || "<span class='mini'>Sem fraquezas comuns detectadas.</span>"}</div>
-                <div class="poke-list">${weakSamples.map(p => `<span class="poke-tag">${p}</span>`).join("") || "<span class='mini'>Boa resistência geral.</span>"}</div>
+                <h3>Fraquezas</h3>
+                <div class="chips">${weakTypeChips || "<span class='mini'>Sem fraquezas registradas na API.</span>"}</div>
+                <div class="poke-list"><span class="mini">Tipos de golpe que causam mais dano contra este Pokémon.</span></div>
               </div>
+            </div>
+            <div class="target-strip">
+              <h3>Alvos fáceis para atacar</h3>
+              <div class="target-grid">${targetTags || "<span class='mini'>Sem alvos super efetivos encontrados para os melhores golpes.</span>"}</div>
+              <span class="mini">${targetTypes ? `Exemplos reais fracos contra ${targetTypes}.` : "Use como leitura rápida durante a batalha."}</span>
             </div>
           </div>
 
           <div class="info-panel">
             <h2 class="panel-title">Dicas de ataque</h2>
             <div class="tips">
-              <div class="tip"><b>Plano</b><span class="mini">Entre contra alvos fracos a ${types.map(t => typeNames[t]).join(" / ")} e evite lutas longas contra counters.</span></div>
-              <div class="tip"><b>Escudos</b><span class="mini">Se o carregado for de alto dano, tente forçar escudo com o golpe mais barato antes.</span></div>
+              <div class="tip"><b>Plano</b><span class="mini">Use golpes ${types.map(t => typeNames[t]).join(" / ")} quando houver bônus de mesmo tipo e boa cobertura.</span></div>
+              <div class="tip"><b>Escudos</b><span class="mini">Prefira carregados eficientes em energia para pressionar escudos antes do golpe de maior dano.</span></div>
               <div class="tip"><b>Troca</b><span class="mini">${weaknesses[0] ? `Cuidado especial com golpes ${typeNames[weaknesses[0].type]}.` : "Use a boa cobertura para trocar com menos medo."}</span></div>
             </div>
           </div>
@@ -816,16 +1061,11 @@
       suggestionsEl.classList.remove("show");
       resultEl.innerHTML = `<section class="empty"><div><span class="loader"></span>Buscando ${value}...</div></section>`;
       try {
-        const res = await fetch(`${API}/pokemon/${encodeURIComponent(term)}`);
-        if (!res.ok) throw new Error("not-found");
-        const pokemon = await res.json();
-        let species = null;
-        try {
-          const sp = await fetch(pokemon.species.url);
-          species = await sp.json();
-        } catch {}
-        input.value = displayName(pokemon.name);
-        renderPokemon(pokemon, species);
+        await dataReady;
+        const pokemon = findPokemon(term);
+        if (!pokemon) throw new Error("not-found");
+        input.value = goDisplayName(pokemon);
+        renderPokemon(pokemon);
       } catch (err) {
         resultEl.innerHTML = `<section class="empty"><div class="empty-inner"><h2>Não encontrei esse Pokémon.</h2><p class="note">Tente o nome em inglês, número da Pokédex ou uma forma como <b>arcanine de hisui</b>.</p></div></section>`;
         errorBox.textContent = "Não foi possível carregar esse Pokémon. Confira a grafia ou sua conexão.";
@@ -866,3 +1106,10 @@
   </script>
 </body>
 </html>
+
+
+
+
+
+
+
