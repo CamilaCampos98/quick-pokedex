@@ -548,6 +548,114 @@
       color: var(--accent);
     }
 
+    .view-tabs {
+      display: flex;
+      gap: 8px;
+      margin-top: 14px;
+      flex-wrap: wrap;
+    }
+
+    .view-tab {
+      min-height: 42px;
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      background: rgba(23, 28, 36, .78);
+      color: var(--text);
+      font-weight: 800;
+      cursor: pointer;
+      padding: 0 14px;
+    }
+
+    .view-tab.active {
+      background: var(--accent);
+      border-color: transparent;
+      color: #18140a;
+    }
+
+    .league-view {
+      grid-column: 1 / -1;
+      display: grid;
+      gap: 14px;
+    }
+
+    .league-head {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      flex-wrap: wrap;
+    }
+
+    .league-grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 14px;
+    }
+
+    .team-card {
+      background: rgba(23, 28, 36, .86);
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      padding: 14px;
+      display: grid;
+      gap: 12px;
+    }
+
+    .team-card h3 {
+      margin: 0;
+      color: var(--accent-2);
+      font-size: 1rem;
+    }
+
+    .team-members {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 10px;
+    }
+
+    .team-member {
+      border-radius: var(--radius);
+      background: #0f141d;
+      border: 1px solid rgba(255, 255, 255, .08);
+      padding: 10px 8px;
+      display: grid;
+      justify-items: center;
+      gap: 6px;
+      text-align: center;
+      min-height: 132px;
+    }
+
+    .team-member img {
+      width: 58px;
+      height: 58px;
+      object-fit: contain;
+      filter: drop-shadow(0 8px 12px rgba(0, 0, 0, .28));
+    }
+
+    .team-member b {
+      font-size: .78rem;
+      line-height: 1.1;
+      overflow-wrap: anywhere;
+    }
+
+    .team-member small {
+      color: var(--muted);
+      font-size: .7rem;
+    }
+
+    .team-types {
+      display: flex;
+      justify-content: center;
+      gap: 4px;
+      flex-wrap: wrap;
+    }
+
+    .team-types .chip {
+      min-height: 22px;
+      padding: 3px 7px;
+      font-size: .64rem;
+    }
     .empty {
       grid-column: 1 / -1;
       min-height: 430px;
@@ -597,14 +705,15 @@
       .status-pill { justify-self: start; }
       .hero-card { order: -1; }
       .tips { grid-template-columns: 1fr; }
-      .target-grid { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+      .target-grid { grid-template-columns: repeat(5, minmax(0, 1fr)); }
+      .league-grid { grid-template-columns: 1fr; }
     }
 
     @media (max-width: 620px) {
       .app { width: min(100% - 20px, 1180px); padding-top: 18px; }
       .brand { align-items: flex-start; }
       .mark { width: 46px; height: 46px; }
-      .search-zone, .move-grid, .matrix, .compare-row { grid-template-columns: 1fr; }
+      .search-zone, .move-grid, .matrix, .compare-row, .team-members { grid-template-columns: 1fr; }
       .go, .compare-run { width: 100%; }
       .poke-stage { min-height: 280px; }
       .name-row { display: grid; }
@@ -612,6 +721,9 @@
       .target-card { min-height: 96px; }
       .target-card b { font-size: .68rem; }
       .compare-head, .compare-face { grid-template-columns: 1fr; display: grid; text-align: center; justify-items: center; }
+      .team-member { grid-template-columns: 54px minmax(0, 1fr); justify-items: start; text-align: left; min-height: 92px; }
+      .team-member img { grid-row: span 3; width: 54px; height: 54px; }
+      .team-types { justify-content: flex-start; }
       h2 { font-size: 1.65rem; }
     }
   </style>
@@ -638,6 +750,12 @@
     </section>
     <div class="error" id="errorBox"></div>
 
+    <nav class="view-tabs" aria-label="Modos da Pokédex">
+      <button class="view-tab active" type="button" data-view="pokedex">Pokédex</button>
+      <button class="view-tab" type="button" data-view="great">Grande Liga</button>
+      <button class="view-tab" type="button" data-view="ultra">Ultra Liga</button>
+    </nav>
+
     <main id="result">
       <section class="empty">
         <div class="empty-inner">
@@ -656,6 +774,7 @@
     const statusEl = document.querySelector("#dataStatus");
     const errorBox = document.querySelector("#errorBox");
     const searchBtn = document.querySelector("#searchBtn");
+    const viewTabs = [...document.querySelectorAll(".view-tab")];
 
     const typeNames = {
       normal: "Normal", fire: "Fogo", water: "Água", electric: "Elétrico", grass: "Planta",
@@ -751,6 +870,7 @@
     let activeSuggestion = -1;
     let dataReady = null;
     let selectedPokemon = null;
+    let currentView = "pokedex";
 
     function normalize(value = "") {
       return String(value)
@@ -1042,9 +1162,6 @@
     }
 
     function targetLimit() {
-      const width = window.innerWidth || document.documentElement?.clientWidth || 1180;
-      if (width <= 620) return 6;
-      if (width <= 900) return 8;
       return 10;
     }
 
@@ -1218,12 +1335,152 @@
       `;
     }
 
+
+    function setActiveView(view) {
+      currentView = view;
+      viewTabs.forEach(tab => tab.classList.toggle("active", tab.dataset.view === view));
+    }
+
+    function estimateMaxCp(pokemon) {
+      const stats = pokemon.stats || {};
+      const attack = stats.attack || 1;
+      const defense = stats.defense || 1;
+      const stamina = stats.stamina || 1;
+      const maxLevelMultiplier = 0.8403;
+      return Math.floor((attack * Math.sqrt(defense) * Math.sqrt(stamina) * maxLevelMultiplier * maxLevelMultiplier) / 10);
+    }
+
+    function leagueFitScore(pokemon, cap) {
+      const stats = pokemon.stats || {};
+      const attack = stats.attack || 1;
+      const defense = stats.defense || 1;
+      const stamina = stats.stamina || 1;
+      const maxCp = estimateMaxCp(pokemon);
+      if (maxCp < cap * 0.72) return 0;
+      const cpRatio = Math.min(1, maxCp / cap);
+      const bulk = Math.sqrt(defense * stamina) / Math.max(60, attack);
+      const types = pokemonTypes(pokemon);
+      const moves = pickMoves(pokemon, types);
+      const coverage = new Set(moves.attackTypes).size;
+      const weaknesses = incomingWeaknesses(types).length;
+      const resistances = incomingResistances(types).length;
+      return cpRatio * 100 + bulk * 18 + coverage * 8 + resistances * 3 - weaknesses * 2;
+    }
+
+    function leagueCandidates(cap) {
+      const seen = new Set();
+      return pokemonList
+        .map(entry => entry.pokemon)
+        .filter(pokemon => pokemon?.stats && pokemon.quickMoves && pokemon.cinematicMoves)
+        .map(pokemon => ({ pokemon, score: leagueFitScore(pokemon, cap), maxCp: estimateMaxCp(pokemon) }))
+        .filter(item => item.score > 0)
+        .sort((a, b) => b.score - a.score)
+        .filter(item => {
+          const key = goDisplayName(item.pokemon).replace(/^(Alolan|Galarian|Hisuian|Paldean) /, "");
+          if (seen.has(key)) return false;
+          seen.add(key);
+          return true;
+        })
+        .slice(0, 60);
+    }
+
+    function teamPenalty(team) {
+      const weakCounts = new Map();
+      const attackTypes = new Set();
+      team.forEach(member => {
+        const types = pokemonTypes(member.pokemon);
+        incomingWeaknesses(types).forEach(item => weakCounts.set(item.type, (weakCounts.get(item.type) || 0) + 1));
+        pickMoves(member.pokemon, types).attackTypes.forEach(type => attackTypes.add(type));
+      });
+      const sharedWeaknessPenalty = [...weakCounts.values()].filter(count => count > 1).reduce((sum, count) => sum + count * 12, 0);
+      return sharedWeaknessPenalty - attackTypes.size * 7;
+    }
+
+    function generateLeagueTeams(cap) {
+      const candidates = leagueCandidates(cap);
+      const seeds = candidates.slice(0, 18);
+      const teams = [];
+      seeds.forEach(seed => {
+        const team = [seed];
+        while (team.length < 3) {
+          const next = candidates
+            .filter(item => !team.some(member => member.pokemon.formId === item.pokemon.formId))
+            .map(item => ({ item, value: item.score + team.reduce((sum, member) => sum + bestAttackValue(pickMoves(item.pokemon, pokemonTypes(item.pokemon)).attackTypes, pokemonTypes(member.pokemon)), 0) * 14 - teamPenalty([...team, item]) }))
+            .sort((a, b) => b.value - a.value)[0]?.item;
+          if (!next) break;
+          team.push(next);
+        }
+        if (team.length === 3) teams.push({ members: team, score: team.reduce((sum, item) => sum + item.score, 0) - teamPenalty(team) });
+      });
+      const unique = [];
+      const seen = new Set();
+      teams.sort((a, b) => b.score - a.score).forEach(team => {
+        const key = team.members.map(item => item.pokemon.formId).sort().join("|");
+        if (!seen.has(key)) {
+          seen.add(key);
+          unique.push(team);
+        }
+      });
+      return unique.slice(0, 6);
+    }
+
+    function renderLeague(view) {
+      const isUltra = view === "ultra";
+      const cap = isUltra ? 2500 : 1500;
+      const title = isUltra ? "Ultra Liga" : "Grande Liga";
+      resultEl.innerHTML = `<section class="empty"><div><span class="loader"></span>Montando equipes da ${title}...</div></section>`;
+      dataReady.then(() => {
+        const teams = generateLeagueTeams(cap);
+        resultEl.innerHTML = `
+          <section class="league-view">
+            <div class="info-panel league-head">
+              <h2 class="panel-title" style="margin:0">Melhores equipes <span>${title}</span></h2>
+              <div class="chips"><span class="chip" style="background:#5dd6c4">CP até ${cap}</span></div>
+            </div>
+            <div class="league-grid">
+              ${teams.map((team, idx) => teamCard(team, idx + 1, cap)).join("")}
+            </div>
+          </section>
+        `;
+      }).catch(() => {
+        resultEl.innerHTML = `<section class="empty"><div class="empty-inner"><h2>Não consegui carregar as equipes.</h2><p class="note">Confira sua conexão e tente novamente.</p></div></section>`;
+      });
+    }
+
+    function teamCard(team, number, cap) {
+      return `
+        <article class="team-card">
+          <h3>Equipe ${number}</h3>
+          <div class="team-members">
+            ${team.members.map((item, idx) => teamMember(item.pokemon, idx, cap)).join("")}
+          </div>
+        </article>
+      `;
+    }
+
+    function teamMember(pokemon, idx, cap) {
+      const roles = ["Abertura", "Cobertura", "Fechador"];
+      const image = pokemonImage(pokemon);
+      const types = pokemonTypes(pokemon);
+      const moves = pickMoves(pokemon, types);
+      const cp = Math.min(cap, estimateMaxCp(pokemon));
+      return `
+        <div class="team-member">
+          ${image ? `<img src="${image}" alt="${goDisplayName(pokemon)}">` : ""}
+          <b>${goDisplayName(pokemon)}</b>
+          <small>${roles[idx]} · CP ${cp}</small>
+          <div class="team-types">${types.map(typeChip).join("")}</div>
+          <small>${moves.fast.split(" (")[0]} · ${moves.charged.split(" + ")[0].split(" (")[0]}</small>
+        </div>
+      `;
+    }
     function typeChip(type, suffix = "") {
       const color = typeColor[type] || "#cbd5e1";
       return `<span class="chip" style="background:${color}">${typeNames[type] || type}${suffix ? " " + suffix : ""}</span>`;
     }
 
     async function search(value = input.value) {
+      setActiveView("pokedex");
       const term = apiName(value);
       if (!term) return;
       errorBox.classList.remove("show");
@@ -1319,11 +1576,27 @@
       if (!event.target.closest(".compare-box")) document.querySelector("#compareSuggestions")?.classList.remove("show");
     });
 
+    viewTabs.forEach(tab => {
+      tab.addEventListener("click", () => {
+        const view = tab.dataset.view;
+        setActiveView(view);
+        if (view === "pokedex") {
+          resultEl.innerHTML = `<section class="empty"><div class="empty-inner"><h2>Digite um Pokémon para começar.</h2><p class="note">Experimente <b>arcanine de hisui</b>, <b>charizard</b>, <b>mewtwo</b> ou um número da Pokédex. As sugestões aparecem enquanto você escreve.</p></div></section>`;
+          return;
+        }
+        renderLeague(view);
+      });
+    });
     searchBtn.addEventListener("click", () => search());
     loadList();
   </script>
 </body>
 </html>
+
+
+
+
+
 
 
 
