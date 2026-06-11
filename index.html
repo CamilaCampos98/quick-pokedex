@@ -1396,21 +1396,39 @@
       return sharedWeaknessPenalty - attackTypes.size * 7;
     }
 
-    function generateLeagueTeams(cap) {
-      const candidates = leagueCandidates(cap);
-      const seeds = candidates.slice(0, 18);
+    function coreLeagueItem(pokemon, cap) {
+      return { pokemon, score: Math.max(35, leagueFitScore(pokemon, cap)), maxCp: estimateMaxCp(pokemon) };
+    }
+
+    function partnerValue(candidate, team) {
+      const candidateTypes = pokemonTypes(candidate.pokemon);
+      const candidateMoves = pickMoves(candidate.pokemon, candidateTypes);
+      const coverage = team.reduce((sum, member) => {
+        const memberTypes = pokemonTypes(member.pokemon);
+        const memberMoves = pickMoves(member.pokemon, memberTypes);
+        return sum + bestAttackValue(candidateMoves.attackTypes, memberTypes) * 10 + bestAttackValue(memberMoves.attackTypes, candidateTypes) * 6;
+      }, 0);
+      return candidate.score + coverage - teamPenalty([...team, candidate]);
+    }
+
+    function generateLeagueTeams(cap, corePokemon) {
+      const core = coreLeagueItem(corePokemon, cap);
+      const candidates = leagueCandidates(cap).filter(item => item.pokemon.formId !== corePokemon.formId);
+      const firstPartners = candidates
+        .map(item => ({ item, value: partnerValue(item, [core]) }))
+        .sort((a, b) => b.value - a.value)
+        .slice(0, 18)
+        .map(entry => entry.item);
       const teams = [];
-      seeds.forEach(seed => {
-        const team = [seed];
-        while (team.length < 3) {
-          const next = candidates
-            .filter(item => !team.some(member => member.pokemon.formId === item.pokemon.formId))
-            .map(item => ({ item, value: item.score + team.reduce((sum, member) => sum + bestAttackValue(pickMoves(item.pokemon, pokemonTypes(item.pokemon)).attackTypes, pokemonTypes(member.pokemon)), 0) * 14 - teamPenalty([...team, item]) }))
-            .sort((a, b) => b.value - a.value)[0]?.item;
-          if (!next) break;
-          team.push(next);
+      firstPartners.forEach(first => {
+        const second = candidates
+          .filter(item => item.pokemon.formId !== first.pokemon.formId)
+          .map(item => ({ item, value: partnerValue(item, [core, first]) }))
+          .sort((a, b) => b.value - a.value)[0]?.item;
+        if (second) {
+          const team = [core, first, second];
+          teams.push({ members: team, score: team.reduce((sum, item) => sum + item.score, 0) - teamPenalty(team) });
         }
-        if (team.length === 3) teams.push({ members: team, score: team.reduce((sum, item) => sum + item.score, 0) - teamPenalty(team) });
       });
       const unique = [];
       const seen = new Set();
@@ -1428,17 +1446,21 @@
       const isUltra = view === "ultra";
       const cap = isUltra ? 2500 : 1500;
       const title = isUltra ? "Ultra Liga" : "Grande Liga";
-      resultEl.innerHTML = `<section class="empty"><div><span class="loader"></span>Montando equipes da ${title}...</div></section>`;
+      if (!selectedPokemon) {
+        resultEl.innerHTML = `<section class="empty"><div class="empty-inner"><h2>Pesquise um Pokémon primeiro.</h2><p class="note">Depois abra ${title} para montar equipes com ele.</p></div></section>`;
+        return;
+      }
+      resultEl.innerHTML = `<section class="empty"><div><span class="loader"></span>Montando equipes da ${title} com ${goDisplayName(selectedPokemon)}...</div></section>`;
       dataReady.then(() => {
-        const teams = generateLeagueTeams(cap);
+        const teams = generateLeagueTeams(cap, selectedPokemon);
         resultEl.innerHTML = `
           <section class="league-view">
             <div class="info-panel league-head">
-              <h2 class="panel-title" style="margin:0">Melhores equipes <span>${title}</span></h2>
+              <h2 class="panel-title" style="margin:0">Equipes com ${goDisplayName(selectedPokemon)} <span>${title}</span></h2>
               <div class="chips"><span class="chip" style="background:#5dd6c4">CP até ${cap}</span></div>
             </div>
             <div class="league-grid">
-              ${teams.map((team, idx) => teamCard(team, idx + 1, cap)).join("")}
+              ${teams.map((team, idx) => teamCard(team, idx + 1, cap)).join("") || `<article class="team-card"><h3>Sem equipes suficientes</h3><span class="mini">Esse Pokémon não tem dados suficientes para montar times nessa liga.</span></article>`}
             </div>
           </section>
         `;
@@ -1592,6 +1614,7 @@
   </script>
 </body>
 </html>
+
 
 
 
