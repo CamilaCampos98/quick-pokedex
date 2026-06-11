@@ -911,14 +911,9 @@
       return dataReady;
     }
 
-    function renderSuggestions() {
-      const term = normalize(input.value);
-      activeSuggestion = -1;
-      if (!term || term.length < 2) {
-        suggestionsEl.classList.remove("show");
-        suggestionsEl.innerHTML = "";
-        return;
-      }
+    function suggestionMatches(value) {
+      const term = normalize(value);
+      if (!term || term.length < 2) return [];
       const aliasHits = [...aliases.entries()]
         .filter(([label]) => label.includes(term))
         .map(([label, name]) => {
@@ -929,14 +924,45 @@
       const hits = pokemonList
         .filter(p => p.search.includes(term) || String(p.index) === term)
         .slice(0, 8);
-      const merged = [...aliasHits, ...hits].filter((hit, idx, arr) => arr.findIndex(x => x.pokemon === hit.pokemon) === idx).slice(0, 8);
-      suggestionsEl.innerHTML = merged.map((p, idx) => `
-        <button class="suggestion" type="button" data-name="${p.name}" data-idx="${idx}" role="option">
+      return [...aliasHits, ...hits]
+        .filter((hit, idx, arr) => arr.findIndex(x => x.pokemon === hit.pokemon) === idx)
+        .slice(0, 8);
+    }
+
+    function suggestionButtons(matches) {
+      return matches.map((p, idx) => `
+        <button class="suggestion" type="button" data-name="${p.name}" data-label="${p.label || goDisplayName(p.pokemon)}" data-idx="${idx}" role="option">
           <span>${p.label || goDisplayName(p.pokemon)}</span>
           <small>${typeof p.index === "number" ? "#" + String(p.index).padStart(3, "0") : p.index}</small>
         </button>
       `).join("");
-      suggestionsEl.classList.toggle("show", merged.length > 0);
+    }
+
+    function renderSuggestions() {
+      activeSuggestion = -1;
+      const merged = suggestionMatches(input.value);
+      if (!merged.length) {
+        suggestionsEl.classList.remove("show");
+        suggestionsEl.innerHTML = "";
+        return;
+      }
+      suggestionsEl.innerHTML = suggestionButtons(merged);
+      suggestionsEl.classList.add("show");
+    }
+
+    function renderCompareSuggestions() {
+      const compareInput = document.querySelector("#compareInput");
+      const compareSuggestions = document.querySelector("#compareSuggestions");
+      if (!compareInput || !compareSuggestions) return;
+      activeCompareSuggestion = -1;
+      const merged = suggestionMatches(compareInput.value);
+      if (!merged.length) {
+        compareSuggestions.classList.remove("show");
+        compareSuggestions.innerHTML = "";
+        return;
+      }
+      compareSuggestions.innerHTML = suggestionButtons(merged);
+      compareSuggestions.classList.add("show");
     }
 
     function incomingEffectiveness(attackType, defenderTypes) {
@@ -1181,7 +1207,7 @@
               <button class="compare-toggle" type="button">Comparar com outro Pokémon</button>
               <div class="compare-box" id="compareBox" hidden>
                 <div class="compare-row">
-                  <input id="compareInput" type="search" autocomplete="off" placeholder="Digite o oponente: dragonite, snorlax, 149..." aria-label="Pokémon oponente">
+                  <div class="search-wrap"><input id="compareInput" type="search" autocomplete="off" placeholder="Digite o oponente: dragonite, snorlax, 149..." aria-label="Pokémon oponente"><div class="suggestions compare-suggestions" id="compareSuggestions" role="listbox"></div></div>
                   <button class="compare-run" type="button">Ver</button>
                 </div>
                 <div class="compare-result" id="compareResult"></div>
@@ -1243,20 +1269,54 @@
       const toggle = event.target.closest(".compare-toggle");
       if (toggle) {
         const box = document.querySelector("#compareBox");
-        if (box) box.hidden = !box.hidden;
+        if (box) {
+          box.hidden = !box.hidden;
+          if (!box.hidden) document.querySelector("#compareInput")?.focus();
+        }
+      }
+      const compareSuggestion = event.target.closest("#compareSuggestions .suggestion");
+      if (compareSuggestion) {
+        const compareInput = document.querySelector("#compareInput");
+        const compareSuggestions = document.querySelector("#compareSuggestions");
+        if (compareInput) compareInput.value = compareSuggestion.dataset.label || compareSuggestion.dataset.name;
+        if (compareSuggestions) compareSuggestions.classList.remove("show");
+        runCompare();
       }
       if (event.target.closest(".compare-run")) runCompare();
     });
 
+    resultEl.addEventListener("input", event => {
+      if (event.target.closest("#compareInput")) renderCompareSuggestions();
+    });
+
     resultEl.addEventListener("keydown", event => {
-      if (event.key === "Enter" && event.target.closest("#compareInput")) {
+      const compareInput = event.target.closest("#compareInput");
+      if (!compareInput) return;
+      const compareSuggestions = document.querySelector("#compareSuggestions");
+      const items = [...(compareSuggestions?.querySelectorAll(".suggestion") || [])];
+      if (event.key === "ArrowDown" && items.length) {
         event.preventDefault();
+        activeCompareSuggestion = (activeCompareSuggestion + 1) % items.length;
+      } else if (event.key === "ArrowUp" && items.length) {
+        event.preventDefault();
+        activeCompareSuggestion = (activeCompareSuggestion - 1 + items.length) % items.length;
+      } else if (event.key === "Enter") {
+        event.preventDefault();
+        const chosen = items[activeCompareSuggestion];
+        if (chosen) {
+          compareInput.value = chosen.dataset.label || chosen.dataset.name;
+          compareSuggestions?.classList.remove("show");
+        }
         runCompare();
+      } else if (event.key === "Escape") {
+        compareSuggestions?.classList.remove("show");
       }
+      items.forEach((item, idx) => item.classList.toggle("active", idx === activeCompareSuggestion));
     });
 
     document.addEventListener("click", event => {
       if (!event.target.closest(".search-zone")) suggestionsEl.classList.remove("show");
+      if (!event.target.closest(".compare-box")) document.querySelector("#compareSuggestions")?.classList.remove("show");
     });
 
     searchBtn.addEventListener("click", () => search());
@@ -1264,6 +1324,8 @@
   </script>
 </body>
 </html>
+
+
 
 
 
