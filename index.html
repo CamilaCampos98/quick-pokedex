@@ -401,19 +401,19 @@
 
     .target-grid {
       display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(82px, 1fr));
+      grid-template-columns: repeat(5, minmax(0, 1fr));
       gap: 10px;
       margin-top: 10px;
     }
 
     .target-card {
-      min-height: 104px;
+      min-height: 100px;
       border: 1px solid rgba(255, 255, 255, .08);
       border-radius: var(--radius);
       background: #151b25;
       padding: 8px 6px;
       display: grid;
-      grid-template-rows: 54px auto auto;
+      grid-template-rows: 52px auto auto;
       justify-items: center;
       align-items: center;
       gap: 4px;
@@ -431,7 +431,7 @@
     .target-card b {
       max-width: 100%;
       color: #eef4fb;
-      font-size: .72rem;
+      font-size: .7rem;
       line-height: 1.08;
       font-weight: 800;
       overflow-wrap: anywhere;
@@ -443,8 +443,89 @@
       color: var(--accent);
       border: 1px solid rgba(255, 203, 76, .25);
       padding: 2px 7px;
-      font-size: .72rem;
+      font-size: .7rem;
       font-weight: 900;
+    }
+    .compare-actions {
+      display: grid;
+      gap: 10px;
+    }
+
+    .compare-toggle, .compare-run {
+      min-height: 44px;
+      border: 0;
+      border-radius: var(--radius);
+      background: var(--accent-2);
+      color: #071512;
+      font-weight: 900;
+      cursor: pointer;
+      padding: 0 16px;
+    }
+
+    .compare-box[hidden] { display: none; }
+
+    .compare-box {
+      display: grid;
+      gap: 12px;
+      margin-top: 12px;
+    }
+
+    .compare-row {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) auto;
+      gap: 10px;
+    }
+
+    .compare-row input {
+      min-height: 44px;
+    }
+
+    .compare-result {
+      min-height: 44px;
+    }
+
+    .compare-card {
+      border-radius: var(--radius);
+      border: 1px solid rgba(255, 255, 255, .08);
+      background: #0f141d;
+      padding: 12px;
+      display: grid;
+      gap: 10px;
+    }
+
+    .compare-card.win { border-color: rgba(114, 227, 157, .38); }
+    .compare-card.lose { border-color: rgba(255, 107, 122, .42); }
+    .compare-card.even { border-color: rgba(255, 203, 76, .35); }
+
+    .compare-head {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      justify-content: space-between;
+    }
+
+    .compare-head strong {
+      font-size: 1.05rem;
+    }
+
+    .compare-face {
+      display: grid;
+      grid-template-columns: 54px minmax(0, 1fr) 54px;
+      gap: 10px;
+      align-items: center;
+    }
+
+    .compare-face img {
+      width: 54px;
+      height: 54px;
+      object-fit: contain;
+    }
+
+    .compare-vs {
+      color: var(--muted);
+      text-align: center;
+      font-weight: 900;
+      font-size: .78rem;
     }
 
     .tips {
@@ -516,16 +597,21 @@
       .status-pill { justify-self: start; }
       .hero-card { order: -1; }
       .tips { grid-template-columns: 1fr; }
+      .target-grid { grid-template-columns: repeat(4, minmax(0, 1fr)); }
     }
 
     @media (max-width: 620px) {
       .app { width: min(100% - 20px, 1180px); padding-top: 18px; }
       .brand { align-items: flex-start; }
       .mark { width: 46px; height: 46px; }
-      .search-zone, .move-grid, .matrix { grid-template-columns: 1fr; }
-      .go { width: 100%; }
+      .search-zone, .move-grid, .matrix, .compare-row { grid-template-columns: 1fr; }
+      .go, .compare-run { width: 100%; }
       .poke-stage { min-height: 280px; }
       .name-row { display: grid; }
+      .target-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; }
+      .target-card { min-height: 96px; }
+      .target-card b { font-size: .68rem; }
+      .compare-head, .compare-face { grid-template-columns: 1fr; display: grid; text-align: center; justify-items: center; }
       h2 { font-size: 1.65rem; }
     }
   </style>
@@ -664,6 +750,7 @@
     let typeData = new Map();
     let activeSuggestion = -1;
     let dataReady = null;
+    let selectedPokemon = null;
 
     function normalize(value = "") {
       return String(value)
@@ -924,14 +1011,20 @@
         charged: chargedLabel,
         attackTypes: attackTypes.length ? attackTypes : types,
         source: "Pokémon GO API",
-        note: chargedTypes
-          ? `Seleção calculada pelos golpes disponíveis na API, priorizando eficiência em combate, energia e bônus de mesmo tipo. Cobertura: ${chargedTypes}.`
-          : "Seleção calculada apenas com os golpes disponíveis na Pokémon GO API."
+        note: chargedTypes ? `Cobertura: ${chargedTypes}.` : ""
       };
+    }
+
+    function targetLimit() {
+      const width = window.innerWidth || document.documentElement?.clientWidth || 1180;
+      if (width <= 620) return 6;
+      if (width <= 900) return 8;
+      return 10;
     }
 
     function easyTargets(currentPokemon, attackTypes) {
       const seen = new Set();
+      const limit = targetLimit();
       return pokemonList
         .map(entry => entry.pokemon)
         .filter(target => target && target.formId !== currentPokemon.formId)
@@ -945,14 +1038,66 @@
         .filter(target => target.value > 1)
         .sort((a, b) => b.value - a.value || (a.pokemon.dexNr || 9999) - (b.pokemon.dexNr || 9999))
         .filter(target => {
-          const key = goDisplayName(target.pokemon);
+          const key = goDisplayName(target.pokemon).replace(/^(Alolan|Galarian|Hisuian|Paldean) /, "");
           if (seen.has(key)) return false;
           seen.add(key);
           return true;
         })
-        .slice(0, 10);
+        .slice(0, limit);
     }
 
+    function pokemonImage(pokemon) {
+      return pokemon.assets?.image || pokemon.assetForms?.find(form => !form.costume)?.image || "";
+    }
+
+    function goPower(pokemon) {
+      const stats = pokemon.stats || {};
+      return Math.max(1, (stats.attack || 1) * Math.sqrt((stats.defense || 1) * (stats.stamina || 1)));
+    }
+
+    function bestAttackValue(attackTypes, defenderTypes) {
+      return Math.max(...attackTypes.map(type => incomingEffectiveness(type, defenderTypes)), 1);
+    }
+
+    function comparePokemon(attacker, defender) {
+      const attackerTypes = pokemonTypes(attacker);
+      const defenderTypes = pokemonTypes(defender);
+      const attackerMoves = pickMoves(attacker, attackerTypes);
+      const defenderMoves = pickMoves(defender, defenderTypes);
+      const attackerHit = bestAttackValue(attackerMoves.attackTypes, defenderTypes);
+      const defenderHit = bestAttackValue(defenderMoves.attackTypes, attackerTypes);
+      const attackerScore = goPower(attacker) * attackerHit;
+      const defenderScore = goPower(defender) * defenderHit;
+      const ratio = attackerScore / defenderScore;
+      const state = ratio > 1.12 ? "win" : ratio < 0.89 ? "lose" : "even";
+      const title = state === "win" ? "Tende a ganhar" : state === "lose" ? "Tende a perder" : "Equilibrado";
+      return { attackerMoves, defenderMoves, attackerHit, defenderHit, state, title };
+    }
+
+    function runCompare() {
+      const inputEl = document.querySelector("#compareInput");
+      const outputEl = document.querySelector("#compareResult");
+      if (!inputEl || !outputEl || !selectedPokemon) return;
+      const opponent = findPokemon(apiName(inputEl.value));
+      if (!opponent) {
+        outputEl.innerHTML = `<div class="compare-card lose"><strong>Não encontrei esse oponente.</strong></div>`;
+        return;
+      }
+      const result = comparePokemon(selectedPokemon, opponent);
+      const selectedImage = pokemonImage(selectedPokemon);
+      const opponentImage = pokemonImage(opponent);
+      outputEl.innerHTML = `
+        <div class="compare-card ${result.state}">
+          <div class="compare-head"><strong>${result.title}</strong><span class="mini">${result.attackerHit}x contra ${result.defenderHit}x</span></div>
+          <div class="compare-face">
+            ${selectedImage ? `<img src="${selectedImage}" alt="${goDisplayName(selectedPokemon)}">` : ""}
+            <div class="compare-vs">${goDisplayName(selectedPokemon)} vs ${goDisplayName(opponent)}</div>
+            ${opponentImage ? `<img src="${opponentImage}" alt="${goDisplayName(opponent)}">` : ""}
+          </div>
+          <div class="chips">${pokemonTypes(opponent).map(typeChip).join("")}</div>
+        </div>
+      `;
+    }
     function goStats(pokemon) {
       return [
         { label: "HP", value: pokemon.stats?.stamina || 0 },
@@ -966,9 +1111,9 @@
       const moves = pickMoves(pokemon, types);
       const weaknesses = incomingWeaknesses(types);
       const resistances = incomingResistances(types);
-      const image = pokemon.assets?.image || pokemon.assetForms?.find(form => !form.costume)?.image || "";
+      selectedPokemon = pokemon;
+      const image = pokemonImage(pokemon);
       const idLabel = pokemon.dexNr ? `#${String(pokemon.dexNr).padStart(3, "0")}` : "Forma especial";
-      const flavor = `Dados oficiais do Pokémon GO: tipos, atributos, resistências, fraquezas e golpes vêm da Pokémon GO API.`;
       const weakTypeChips = weaknesses.map(w => typeChip(w.type, w.value === 4 ? "4x" : "2x")).join("");
       const resistTypeChips = resistances.map(r => typeChip(r.type, r.value === 0 ? "0x" : r.value === 0.25 ? "1/4x" : "1/2x")).join("");
       const targets = easyTargets(pokemon, moves.attackTypes);
@@ -987,9 +1132,7 @@
                 <div class="chips" style="margin-top:10px">${types.map(typeChip).join("")}</div>
               </div>
               <div class="dex">${idLabel}</div>
-            </div>
-            <p class="note">${flavor}</p>
-            <div class="stats">
+            </div>            <div class="stats">
               ${goStats(pokemon).map(s => {
                 const pct = Math.min(100, Math.round((s.value / 300) * 100));
                 return `<div class="stat"><span>${s.label}</span><div class="bar"><span style="--w:${pct}%"></span></div><b>${s.value}</b></div>`;
@@ -1004,16 +1147,12 @@
             <div class="move-grid">
               <div class="move">
                 <small>Melhor ataque rápido</small>
-                <b>${moves.fast}</b>
-                <span class="mini">Melhor opção calculada pelos golpes disponíveis na API.</span>
-              </div>
+                <b>${moves.fast}</b>              </div>
               <div class="move">
                 <small>Melhores ataques carregados</small>
-                <b>${moves.charged}</b>
-                <span class="mini">Tenha um golpe principal e um de cobertura quando possível.</span>
-              </div>
+                <b>${moves.charged}</b>              </div>
             </div>
-            <p class="note" style="margin-bottom:0">${moves.note}</p>
+            ${moves.note ? `<p class="note" style="margin-bottom:0">${moves.note}</p>` : ""}
           </div>
 
           <div class="info-panel">
@@ -1033,16 +1172,20 @@
             <div class="target-strip">
               <h3>Alvos fáceis para atacar</h3>
               <div class="target-grid">${targetTags || "<span class='mini'>Sem alvos super efetivos encontrados para os melhores golpes.</span>"}</div>
-              <span class="mini">${targetTypes ? `Exemplos reais fracos contra ${targetTypes}.` : "Use como leitura rápida durante a batalha."}</span>
             </div>
           </div>
 
           <div class="info-panel">
-            <h2 class="panel-title">Dicas de ataque</h2>
-            <div class="tips">
-              <div class="tip"><b>Plano</b><span class="mini">Use golpes ${types.map(t => typeNames[t]).join(" / ")} quando houver bônus de mesmo tipo e boa cobertura.</span></div>
-              <div class="tip"><b>Escudos</b><span class="mini">Prefira carregados eficientes em energia para pressionar escudos antes do golpe de maior dano.</span></div>
-              <div class="tip"><b>Troca</b><span class="mini">${weaknesses[0] ? `Cuidado especial com golpes ${typeNames[weaknesses[0].type]}.` : "Use a boa cobertura para trocar com menos medo."}</span></div>
+            <h2 class="panel-title">Comparar <span>Duelo rápido</span></h2>
+            <div class="compare-actions">
+              <button class="compare-toggle" type="button">Comparar com outro Pokémon</button>
+              <div class="compare-box" id="compareBox" hidden>
+                <div class="compare-row">
+                  <input id="compareInput" type="search" autocomplete="off" placeholder="Digite o oponente: dragonite, snorlax, 149..." aria-label="Pokémon oponente">
+                  <button class="compare-run" type="button">Ver</button>
+                </div>
+                <div class="compare-result" id="compareResult"></div>
+              </div>
             </div>
           </div>
         </section>
@@ -1096,6 +1239,21 @@
       const btn = event.target.closest(".suggestion");
       if (btn) search(btn.dataset.name);
     });
+    resultEl.addEventListener("click", event => {
+      const toggle = event.target.closest(".compare-toggle");
+      if (toggle) {
+        const box = document.querySelector("#compareBox");
+        if (box) box.hidden = !box.hidden;
+      }
+      if (event.target.closest(".compare-run")) runCompare();
+    });
+
+    resultEl.addEventListener("keydown", event => {
+      if (event.key === "Enter" && event.target.closest("#compareInput")) {
+        event.preventDefault();
+        runCompare();
+      }
+    });
 
     document.addEventListener("click", event => {
       if (!event.target.closest(".search-zone")) suggestionsEl.classList.remove("show");
@@ -1106,6 +1264,11 @@
   </script>
 </body>
 </html>
+
+
+
+
+
 
 
 
