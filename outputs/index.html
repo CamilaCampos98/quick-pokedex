@@ -1,0 +1,868 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Quick Pokédex</title>
+  <style>
+    :root {
+      color-scheme: dark;
+      --bg: #0d1117;
+      --panel: #171c24;
+      --panel-2: #202735;
+      --line: #303a4d;
+      --text: #f2f5f9;
+      --muted: #a7b0c0;
+      --accent: #ffcb4c;
+      --accent-2: #5dd6c4;
+      --danger: #ff6b7a;
+      --ok: #72e39d;
+      --shadow: 0 24px 80px rgba(0, 0, 0, .36);
+      --radius: 8px;
+      font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      color: var(--text);
+      background:
+        radial-gradient(circle at 30% 20%, rgba(93, 214, 196, .16), transparent 28rem),
+        linear-gradient(135deg, #0d1117 0%, #151822 42%, #10141d 100%);
+    }
+
+    button, input { font: inherit; }
+
+    .app {
+      width: min(1180px, calc(100% - 32px));
+      margin: 0 auto;
+      padding: 28px 0 40px;
+    }
+
+    header {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) auto;
+      gap: 20px;
+      align-items: end;
+      margin-bottom: 24px;
+    }
+
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+    }
+
+    .mark {
+      width: 54px;
+      height: 54px;
+      border-radius: 50%;
+      background:
+        linear-gradient(#ef4658 0 48%, #151820 48% 55%, #f5f6fa 55% 100%);
+      border: 3px solid #11151d;
+      box-shadow: inset 0 0 0 4px rgba(255, 255, 255, .08), 0 12px 26px rgba(0, 0, 0, .32);
+      position: relative;
+      flex: 0 0 auto;
+    }
+
+    .mark::after {
+      content: "";
+      position: absolute;
+      left: 50%;
+      top: 50%;
+      width: 17px;
+      height: 17px;
+      transform: translate(-50%, -50%);
+      border-radius: 50%;
+      background: #f7f9fc;
+      border: 4px solid #151820;
+    }
+
+    h1 {
+      margin: 0;
+      font-size: clamp(2rem, 5vw, 4.2rem);
+      line-height: .95;
+      letter-spacing: 0;
+    }
+
+    .subtitle {
+      margin: 8px 0 0;
+      color: var(--muted);
+      max-width: 720px;
+      font-size: 1rem;
+    }
+
+    .status-pill {
+      border: 1px solid var(--line);
+      background: rgba(23, 28, 36, .78);
+      color: var(--muted);
+      border-radius: 999px;
+      padding: 10px 14px;
+      white-space: nowrap;
+      box-shadow: 0 8px 30px rgba(0, 0, 0, .16);
+    }
+
+    .search-zone {
+      position: relative;
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) auto;
+      gap: 10px;
+      background: rgba(23, 28, 36, .76);
+      border: 1px solid var(--line);
+      padding: 12px;
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      backdrop-filter: blur(12px);
+      z-index: 4;
+    }
+
+    .search-wrap { position: relative; }
+
+    input {
+      width: 100%;
+      min-height: 54px;
+      border: 1px solid transparent;
+      border-radius: var(--radius);
+      background: #0f141d;
+      color: var(--text);
+      padding: 0 18px;
+      outline: none;
+      font-size: 1.05rem;
+    }
+
+    input:focus {
+      border-color: var(--accent-2);
+      box-shadow: 0 0 0 3px rgba(93, 214, 196, .14);
+    }
+
+    .go {
+      min-height: 54px;
+      border: 0;
+      border-radius: var(--radius);
+      padding: 0 22px;
+      background: var(--accent);
+      color: #18140a;
+      font-weight: 800;
+      cursor: pointer;
+    }
+
+    .suggestions {
+      position: absolute;
+      inset: calc(100% + 8px) 0 auto 0;
+      background: #111720;
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      overflow: hidden;
+      max-height: 280px;
+      overflow-y: auto;
+      display: none;
+    }
+
+    .suggestions.show { display: block; }
+
+    .suggestion {
+      width: 100%;
+      border: 0;
+      background: transparent;
+      color: var(--text);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 12px;
+      padding: 12px 14px;
+      text-align: left;
+      cursor: pointer;
+      border-bottom: 1px solid rgba(255, 255, 255, .06);
+    }
+
+    .suggestion:hover, .suggestion.active { background: #202735; }
+
+    .suggestion small { color: var(--muted); }
+
+    main {
+      margin-top: 22px;
+      display: grid;
+      grid-template-columns: 390px minmax(0, 1fr);
+      gap: 18px;
+      align-items: start;
+    }
+
+    .hero-card, .info-panel, .empty {
+      background: rgba(23, 28, 36, .86);
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      backdrop-filter: blur(12px);
+    }
+
+    .hero-card { overflow: hidden; }
+
+    .poke-stage {
+      min-height: 360px;
+      display: grid;
+      place-items: center;
+      background:
+        linear-gradient(140deg, rgba(255, 203, 76, .16), transparent 54%),
+        linear-gradient(180deg, #242c3b, #161b24);
+      position: relative;
+    }
+
+    .poke-stage::before {
+      content: "";
+      position: absolute;
+      width: 230px;
+      height: 230px;
+      border: 2px dashed rgba(255, 255, 255, .14);
+      border-radius: 50%;
+    }
+
+    .pokemon-img {
+      width: min(78%, 292px);
+      image-rendering: auto;
+      filter: drop-shadow(0 28px 24px rgba(0, 0, 0, .44));
+      position: relative;
+      z-index: 1;
+    }
+
+    .identity {
+      padding: 18px;
+      display: grid;
+      gap: 12px;
+    }
+
+    .name-row {
+      display: flex;
+      justify-content: space-between;
+      gap: 12px;
+      align-items: start;
+    }
+
+    h2 {
+      margin: 0;
+      font-size: 2rem;
+      line-height: 1;
+      letter-spacing: 0;
+    }
+
+    .dex {
+      color: var(--muted);
+      font-weight: 800;
+    }
+
+    .chips {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+
+    .chip {
+      display: inline-flex;
+      align-items: center;
+      min-height: 30px;
+      border-radius: 999px;
+      padding: 0 11px;
+      font-size: .82rem;
+      font-weight: 800;
+      color: #11151c;
+      text-transform: uppercase;
+    }
+
+    .stats {
+      display: grid;
+      gap: 9px;
+    }
+
+    .stat {
+      display: grid;
+      grid-template-columns: 72px minmax(0, 1fr) 36px;
+      gap: 10px;
+      align-items: center;
+      color: var(--muted);
+      font-size: .9rem;
+    }
+
+    .bar {
+      height: 9px;
+      border-radius: 999px;
+      background: #0e131b;
+      overflow: hidden;
+    }
+
+    .bar span {
+      display: block;
+      height: 100%;
+      width: var(--w);
+      border-radius: inherit;
+      background: linear-gradient(90deg, var(--accent-2), var(--accent));
+    }
+
+    .stack {
+      display: grid;
+      gap: 18px;
+    }
+
+    .info-panel {
+      padding: 18px;
+    }
+
+    .panel-title {
+      margin: 0 0 14px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      font-size: 1rem;
+      color: var(--muted);
+      text-transform: uppercase;
+      letter-spacing: 0;
+    }
+
+    .move-grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 12px;
+    }
+
+    .move {
+      background: var(--panel-2);
+      border: 1px solid rgba(255, 255, 255, .08);
+      border-radius: var(--radius);
+      padding: 14px;
+      display: grid;
+      gap: 10px;
+      min-height: 122px;
+    }
+
+    .move b { font-size: 1.12rem; }
+
+    .move small, .note, .mini {
+      color: var(--muted);
+      line-height: 1.45;
+    }
+
+    .matrix {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 12px;
+    }
+
+    .list-card {
+      border-radius: var(--radius);
+      border: 1px solid rgba(255, 255, 255, .08);
+      background: var(--panel-2);
+      padding: 14px;
+      min-height: 178px;
+    }
+
+    .list-card h3 {
+      margin: 0 0 10px;
+      font-size: 1rem;
+    }
+
+    .list-card.good h3 { color: var(--ok); }
+    .list-card.bad h3 { color: var(--danger); }
+
+    .poke-list {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin-top: 12px;
+    }
+
+    .poke-tag {
+      border-radius: 999px;
+      background: #0f141d;
+      border: 1px solid rgba(255, 255, 255, .08);
+      padding: 7px 10px;
+      color: #dce3ee;
+      font-size: .87rem;
+    }
+
+    .tips {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 12px;
+    }
+
+    .tip {
+      background: #0f141d;
+      border: 1px solid rgba(255, 255, 255, .08);
+      border-radius: var(--radius);
+      padding: 12px;
+      min-height: 94px;
+    }
+
+    .tip b {
+      display: block;
+      margin-bottom: 6px;
+      color: var(--accent);
+    }
+
+    .empty {
+      grid-column: 1 / -1;
+      min-height: 430px;
+      display: grid;
+      place-items: center;
+      padding: 30px;
+      text-align: center;
+    }
+
+    .empty-inner {
+      max-width: 650px;
+    }
+
+    .empty h2 {
+      font-size: clamp(2rem, 5vw, 4rem);
+      margin-bottom: 12px;
+    }
+
+    .loader {
+      display: inline-block;
+      width: 18px;
+      height: 18px;
+      border-radius: 50%;
+      border: 3px solid rgba(255, 255, 255, .18);
+      border-top-color: var(--accent);
+      animation: spin .8s linear infinite;
+      vertical-align: middle;
+      margin-right: 8px;
+    }
+
+    .error {
+      color: #ffd8dc;
+      background: rgba(255, 107, 122, .12);
+      border: 1px solid rgba(255, 107, 122, .28);
+      border-radius: var(--radius);
+      padding: 12px;
+      margin-top: 12px;
+      display: none;
+    }
+
+    .error.show { display: block; }
+
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    @media (max-width: 900px) {
+      header, main { grid-template-columns: 1fr; }
+      .status-pill { justify-self: start; }
+      .hero-card { order: -1; }
+      .tips { grid-template-columns: 1fr; }
+    }
+
+    @media (max-width: 620px) {
+      .app { width: min(100% - 20px, 1180px); padding-top: 18px; }
+      .brand { align-items: flex-start; }
+      .mark { width: 46px; height: 46px; }
+      .search-zone, .move-grid, .matrix { grid-template-columns: 1fr; }
+      .go { width: 100%; }
+      .poke-stage { min-height: 280px; }
+      .name-row { display: grid; }
+      h2 { font-size: 1.65rem; }
+    }
+  </style>
+</head>
+<body>
+  <div class="app">
+    <header>
+      <div class="brand">
+        <div class="mark" aria-hidden="true"></div>
+        <div>
+          <h1>Quick Pokédex</h1>
+          <p class="subtitle">Busca rápida por nome ou número, com tipos, atributos, golpes sugeridos e leitura simples de vantagem.</p>
+        </div>
+      </div>
+      <div class="status-pill" id="dataStatus">Carregando Pokédex...</div>
+    </header>
+
+    <section class="search-zone" aria-label="Busca de Pokémon">
+      <div class="search-wrap">
+        <input id="searchInput" type="search" autocomplete="off" placeholder="Digite: arcanine de hisui, pikachu, 25..." aria-label="Nome ou número do Pokémon">
+        <div class="suggestions" id="suggestions" role="listbox"></div>
+      </div>
+      <button class="go" id="searchBtn" type="button">Buscar</button>
+    </section>
+    <div class="error" id="errorBox"></div>
+
+    <main id="result">
+      <section class="empty">
+        <div class="empty-inner">
+          <h2>Digite um Pokémon para começar.</h2>
+          <p class="note">Experimente <b>arcanine de hisui</b>, <b>charizard</b>, <b>mewtwo</b> ou um número da Pokédex. As sugestões aparecem enquanto você escreve.</p>
+        </div>
+      </section>
+    </main>
+  </div>
+
+  <script>
+    const API = "https://pokeapi.co/api/v2";
+    const input = document.querySelector("#searchInput");
+    const suggestionsEl = document.querySelector("#suggestions");
+    const resultEl = document.querySelector("#result");
+    const statusEl = document.querySelector("#dataStatus");
+    const errorBox = document.querySelector("#errorBox");
+    const searchBtn = document.querySelector("#searchBtn");
+
+    const typeNames = {
+      normal: "Normal", fire: "Fogo", water: "Água", electric: "Elétrico", grass: "Planta",
+      ice: "Gelo", fighting: "Lutador", poison: "Veneno", ground: "Terra", flying: "Voador",
+      psychic: "Psíquico", bug: "Inseto", rock: "Pedra", ghost: "Fantasma", dragon: "Dragão",
+      dark: "Sombrio", steel: "Aço", fairy: "Fada"
+    };
+
+    const typeColor = {
+      normal: "#a8a77a", fire: "#ee8130", water: "#6390f0", electric: "#f7d02c", grass: "#7ac74c",
+      ice: "#96d9d6", fighting: "#c22e28", poison: "#a33ea1", ground: "#e2bf65", flying: "#a98ff3",
+      psychic: "#f95587", bug: "#a6b91a", rock: "#b6a136", ghost: "#735797", dragon: "#6f35fc",
+      dark: "#705746", steel: "#b7b7ce", fairy: "#d685ad"
+    };
+
+    const typeChart = {
+      normal: { weak: ["rock", "steel"], immune: ["ghost"] },
+      fire: { strong: ["grass", "ice", "bug", "steel"], weak: ["fire", "water", "rock", "dragon"] },
+      water: { strong: ["fire", "ground", "rock"], weak: ["water", "grass", "dragon"] },
+      electric: { strong: ["water", "flying"], weak: ["electric", "grass", "dragon"], immune: ["ground"] },
+      grass: { strong: ["water", "ground", "rock"], weak: ["fire", "grass", "poison", "flying", "bug", "dragon", "steel"] },
+      ice: { strong: ["grass", "ground", "flying", "dragon"], weak: ["fire", "water", "ice", "steel"] },
+      fighting: { strong: ["normal", "ice", "rock", "dark", "steel"], weak: ["poison", "flying", "psychic", "bug", "fairy"], immune: ["ghost"] },
+      poison: { strong: ["grass", "fairy"], weak: ["poison", "ground", "rock", "ghost"], immune: ["steel"] },
+      ground: { strong: ["fire", "electric", "poison", "rock", "steel"], weak: ["grass", "bug"], immune: ["flying"] },
+      flying: { strong: ["grass", "fighting", "bug"], weak: ["electric", "rock", "steel"] },
+      psychic: { strong: ["fighting", "poison"], weak: ["psychic", "steel"], immune: ["dark"] },
+      bug: { strong: ["grass", "psychic", "dark"], weak: ["fire", "fighting", "poison", "flying", "ghost", "steel", "fairy"] },
+      rock: { strong: ["fire", "ice", "flying", "bug"], weak: ["fighting", "ground", "steel"] },
+      ghost: { strong: ["psychic", "ghost"], weak: ["dark"], immune: ["normal"] },
+      dragon: { strong: ["dragon"], weak: ["steel"], immune: ["fairy"] },
+      dark: { strong: ["psychic", "ghost"], weak: ["fighting", "dark", "fairy"] },
+      steel: { strong: ["ice", "rock", "fairy"], weak: ["fire", "water", "electric", "steel"] },
+      fairy: { strong: ["fighting", "dragon", "dark"], weak: ["fire", "poison", "steel"] }
+    };
+
+    const sampleByType = {
+      normal: ["Snorlax", "Blissey", "Pidgeot"], fire: ["Charizard", "Talonflame", "Volcarona"],
+      water: ["Swampert", "Gyarados", "Greninja"], electric: ["Raikou", "Magnezone", "Zapdos"],
+      grass: ["Venusaur", "Roserade", "Kartana"], ice: ["Mamoswine", "Weavile", "Lapras"],
+      fighting: ["Machamp", "Lucario", "Conkeldurr"], poison: ["Nidoking", "Toxicroak", "Gengar"],
+      ground: ["Garchomp", "Excadrill", "Groudon"], flying: ["Dragonite", "Togekiss", "Skarmory"],
+      psychic: ["Mewtwo", "Metagross", "Gardevoir"], bug: ["Scizor", "Heracross", "Pinsir"],
+      rock: ["Tyranitar", "Rhyperior", "Rampardos"], ghost: ["Giratina", "Chandelure", "Gengar"],
+      dragon: ["Rayquaza", "Salamence", "Haxorus"], dark: ["Umbreon", "Hydreigon", "Darkrai"],
+      steel: ["Metagross", "Melmetal", "Dialga"], fairy: ["Togekiss", "Sylveon", "Azumarill"]
+    };
+
+    const quickMoves = {
+      fire: ["Fire Fang", "Incinerate", "Fire Spin"], water: ["Water Gun", "Waterfall", "Bubble"],
+      electric: ["Thunder Shock", "Volt Switch", "Spark"], grass: ["Vine Whip", "Razor Leaf", "Bullet Seed"],
+      ice: ["Powder Snow", "Ice Shard", "Frost Breath"], fighting: ["Counter", "Karate Chop", "Force Palm"],
+      poison: ["Poison Jab", "Poison Sting", "Acid"], ground: ["Mud Shot", "Mud-Slap", "Sand Attack"],
+      flying: ["Wing Attack", "Gust", "Air Slash"], psychic: ["Psycho Cut", "Confusion", "Zen Headbutt"],
+      bug: ["Bug Bite", "Fury Cutter", "Struggle Bug"], rock: ["Smack Down", "Rock Throw", "Rollout"],
+      ghost: ["Shadow Claw", "Hex", "Lick"], dragon: ["Dragon Breath", "Dragon Tail", "Dragon Rage"],
+      dark: ["Snarl", "Bite", "Sucker Punch"], steel: ["Bullet Punch", "Metal Claw", "Steel Wing"],
+      fairy: ["Charm", "Fairy Wind", "Tackle"], normal: ["Lock-On", "Quick Attack", "Tackle"]
+    };
+
+    const chargedMoves = {
+      fire: ["Flamethrower", "Overheat", "Wild Charge"], water: ["Hydro Cannon", "Surf", "Aqua Tail"],
+      electric: ["Wild Charge", "Thunderbolt", "Discharge"], grass: ["Frenzy Plant", "Leaf Blade", "Power Whip"],
+      ice: ["Avalanche", "Ice Beam", "Icy Wind"], fighting: ["Aura Sphere", "Dynamic Punch", "Close Combat"],
+      poison: ["Sludge Bomb", "Poison Fang", "Sludge Wave"], ground: ["Earth Power", "Earthquake", "High Horsepower"],
+      flying: ["Sky Attack", "Brave Bird", "Aerial Ace"], psychic: ["Psystrike", "Psychic", "Psyshock"],
+      bug: ["X-Scissor", "Megahorn", "Bug Buzz"], rock: ["Rock Slide", "Stone Edge", "Rock Wrecker"],
+      ghost: ["Shadow Ball", "Shadow Punch", "Ominous Wind"], dragon: ["Outrage", "Dragon Claw", "Breaking Swipe"],
+      dark: ["Dark Pulse", "Crunch", "Foul Play"], steel: ["Meteor Mash", "Iron Head", "Flash Cannon"],
+      fairy: ["Moonblast", "Play Rough", "Dazzling Gleam"], normal: ["Body Slam", "Hyper Beam", "Return"]
+    };
+
+    const curatedGoMoves = {
+      "arcanine-hisui": { fast: "Fire Fang", charged: "Rock Slide + Wild Charge", note: "Use Fogo para pressão constante e Pedra/Elétrico para surpreender voadores e águas." },
+      arcanine: { fast: "Fire Fang", charged: "Flamethrower + Wild Charge", note: "Boa cobertura: Fogo para STAB e Wild Charge para água/voador." },
+      charizard: { fast: "Wing Attack", charged: "Blast Burn + Dragon Claw", note: "Carrega rápido, força escudos e mantém pressão." },
+      swampert: { fast: "Mud Shot", charged: "Hydro Cannon + Earthquake", note: "Mud Shot gera energia muito rápido; ótimo para ritmo de batalha." },
+      venusaur: { fast: "Vine Whip", charged: "Frenzy Plant + Sludge Bomb", note: "Pressiona águas/terras e ainda ameaça fadas com Veneno." },
+      mewtwo: { fast: "Psycho Cut", charged: "Psystrike + Shadow Ball", note: "Psycho Cut acelera energia; Psystrike é o golpe principal." },
+      metagross: { fast: "Bullet Punch", charged: "Meteor Mash + Earthquake", note: "Excelente contra Fada, Gelo e Pedra; Earthquake cobre Aço/Fogo." },
+      dragonite: { fast: "Dragon Breath", charged: "Dragon Claw + Superpower", note: "Dragon Breath dá dano constante; Dragon Claw pressiona escudos." },
+      gengar: { fast: "Shadow Claw", charged: "Shadow Ball + Sludge Bomb", note: "Muito dano, pouca resistência: jogue com troca e escudos." },
+      pikachu: { fast: "Thunder Shock", charged: "Wild Charge + Surf", note: "Elétrico rápido com cobertura de Água quando disponível." }
+    };
+
+    const aliases = new Map([
+      ["arcanine de hisui", "arcanine-hisui"],
+      ["arcanine hisui", "arcanine-hisui"],
+      ["hisuian arcanine", "arcanine-hisui"],
+      ["growlithe de hisui", "growlithe-hisui"],
+      ["growlithe hisui", "growlithe-hisui"],
+      ["ninetales de alola", "ninetales-alola"],
+      ["ninetales alola", "ninetales-alola"],
+      ["raichu de alola", "raichu-alola"],
+      ["raichu alola", "raichu-alola"],
+      ["marowak de alola", "marowak-alola"],
+      ["marowak alola", "marowak-alola"]
+    ]);
+
+    let pokemonList = [];
+    let activeSuggestion = -1;
+
+    function normalize(value) {
+      return value
+        .toLowerCase()
+        .normalize("NFD")
+        .replace(/[\u0300-\u036f]/g, "")
+        .replace(/[._]/g, "-")
+        .replace(/\s+/g, " ")
+        .trim();
+    }
+
+    function displayName(name) {
+      return name
+        .split("-")
+        .map(part => part.charAt(0).toUpperCase() + part.slice(1))
+        .join(" ");
+    }
+
+    function apiName(value) {
+      const term = normalize(value);
+      if (/^\d+$/.test(term)) return term;
+      if (aliases.has(term)) return aliases.get(term);
+      const compact = term.replace(/\s+/g, "-");
+      return aliases.get(compact) || compact;
+    }
+
+    async function loadList() {
+      try {
+        const res = await fetch(`${API}/pokemon?limit=20000`);
+        const data = await res.json();
+        pokemonList = data.results.map((p, index) => ({
+          name: p.name,
+          label: displayName(p.name),
+          search: normalize(p.name),
+          index: index + 1
+        }));
+        statusEl.textContent = `${pokemonList.length.toLocaleString("pt-BR")} opções prontas`;
+      } catch (err) {
+        statusEl.textContent = "Busca online indisponível";
+      }
+    }
+
+    function renderSuggestions() {
+      const term = normalize(input.value);
+      activeSuggestion = -1;
+      if (!term || term.length < 2) {
+        suggestionsEl.classList.remove("show");
+        suggestionsEl.innerHTML = "";
+        return;
+      }
+      const aliasHits = [...aliases.entries()]
+        .filter(([label]) => label.includes(term))
+        .map(([label, name]) => ({ name, label: `${displayName(name)} (${label})`, index: "forma" }));
+      const hits = pokemonList
+        .filter(p => p.search.includes(term) || String(p.index) === term)
+        .slice(0, 8);
+      const merged = [...aliasHits, ...hits].filter((hit, idx, arr) => arr.findIndex(x => x.name === hit.name) === idx).slice(0, 8);
+      suggestionsEl.innerHTML = merged.map((p, idx) => `
+        <button class="suggestion" type="button" data-name="${p.name}" data-idx="${idx}" role="option">
+          <span>${p.label || displayName(p.name)}</span>
+          <small>${typeof p.index === "number" ? "#" + String(p.index).padStart(3, "0") : p.index}</small>
+        </button>
+      `).join("");
+      suggestionsEl.classList.toggle("show", merged.length > 0);
+    }
+
+    function effectiveness(attackType, defenderTypes) {
+      let value = 1;
+      const data = typeChart[attackType] || {};
+      defenderTypes.forEach(type => {
+        if (data.immune?.includes(type)) value *= 0;
+        else if (data.strong?.includes(type)) value *= 2;
+        else if (data.weak?.includes(type)) value *= .5;
+      });
+      return value;
+    }
+
+    function incomingWeaknesses(types) {
+      return Object.keys(typeNames)
+        .map(type => ({ type, value: effectiveness(type, types) }))
+        .filter(item => item.value > 1)
+        .sort((a, b) => b.value - a.value);
+    }
+
+    function attackingStrengths(types) {
+      const seen = new Map();
+      types.forEach(type => {
+        (typeChart[type]?.strong || []).forEach(target => {
+          seen.set(target, Math.max(seen.get(target) || 0, 2));
+        });
+      });
+      return [...seen.keys()];
+    }
+
+    function pickMoves(name, types) {
+      if (curatedGoMoves[name]) return { ...curatedGoMoves[name], source: "curado" };
+      const primary = types[0] || "normal";
+      const secondary = types[1] || primary;
+      const fast = quickMoves[primary]?.[0] || "Quick Attack";
+      const chargedA = chargedMoves[primary]?.[0] || "Body Slam";
+      const chargedB = secondary !== primary ? (chargedMoves[secondary]?.[0] || chargedMoves[primary]?.[1]) : (chargedMoves[primary]?.[1] || chargededMoves?.normal?.[0] || "Return");
+      return {
+        fast,
+        charged: `${chargedA} + ${chargedB}`,
+        source: "estimado por tipo",
+        note: `Priorize golpes ${typeNames[primary]} para bônus de mesmo tipo. O segundo carregado cobre ${typeNames[secondary] || typeNames[primary]}.`
+      };
+    }
+
+    function statLabel(name) {
+      return ({ hp: "HP", attack: "ATQ", defense: "DEF", "special-attack": "ESP", "special-defense": "RES", speed: "VEL" })[name] || name;
+    }
+
+    function renderPokemon(pokemon, species) {
+      const types = pokemon.types.map(t => t.type.name);
+      const moves = pickMoves(pokemon.name, types);
+      const weaknesses = incomingWeaknesses(types);
+      const strengths = attackingStrengths(types);
+      const image =
+        pokemon.sprites.other?.["official-artwork"]?.front_default ||
+        pokemon.sprites.other?.home?.front_default ||
+        pokemon.sprites.front_default ||
+        "";
+      const idLabel = pokemon.id < 10000 ? `#${String(pokemon.id).padStart(3, "0")}` : "Forma especial";
+      const flavor = species?.flavor_text_entries?.find(f => f.language.name === "en")?.flavor_text?.replace(/\s+/g, " ") || "Resumo rápido para consulta durante montagem de time.";
+      const strongSamples = strengths.flatMap(type => sampleByType[type] || []).filter((v, i, arr) => arr.indexOf(v) === i).slice(0, 8);
+      const weakSamples = weaknesses.flatMap(w => sampleByType[w.type] || []).filter((v, i, arr) => arr.indexOf(v) === i).slice(0, 8);
+      const bestAttackTypes = strengths.slice(0, 6).map(typeChip).join("");
+      const weakTypeChips = weaknesses.slice(0, 6).map(w => typeChip(w.type, w.value === 4 ? "4x" : "2x")).join("");
+
+      resultEl.innerHTML = `
+        <aside class="hero-card">
+          <div class="poke-stage">
+            ${image ? `<img class="pokemon-img" src="${image}" alt="${displayName(pokemon.name)}">` : ""}
+          </div>
+          <div class="identity">
+            <div class="name-row">
+              <div>
+                <h2>${displayName(pokemon.name)}</h2>
+                <div class="chips" style="margin-top:10px">${types.map(typeChip).join("")}</div>
+              </div>
+              <div class="dex">${idLabel}</div>
+            </div>
+            <p class="note">${flavor}</p>
+            <div class="stats">
+              ${pokemon.stats.map(s => {
+                const pct = Math.min(100, Math.round((s.base_stat / 180) * 100));
+                return `<div class="stat"><span>${statLabel(s.stat.name)}</span><div class="bar"><span style="--w:${pct}%"></span></div><b>${s.base_stat}</b></div>`;
+              }).join("")}
+            </div>
+          </div>
+        </aside>
+
+        <section class="stack">
+          <div class="info-panel">
+            <h2 class="panel-title">Melhor combinação rápida <span>${moves.source}</span></h2>
+            <div class="move-grid">
+              <div class="move">
+                <small>Ataque ágil</small>
+                <b>${moves.fast}</b>
+                <span class="mini">Use para gerar energia e manter pressão constante.</span>
+              </div>
+              <div class="move">
+                <small>Ataques carregados</small>
+                <b>${moves.charged}</b>
+                <span class="mini">Tenha um golpe principal e um de cobertura quando possível.</span>
+              </div>
+            </div>
+            <p class="note" style="margin-bottom:0">${moves.note}</p>
+          </div>
+
+          <div class="info-panel">
+            <h2 class="panel-title">Vantagem de tipos</h2>
+            <div class="matrix">
+              <div class="list-card good">
+                <h3>Mais forte contra</h3>
+                <div class="chips">${bestAttackTypes || "<span class='mini'>Sem vantagem ofensiva direta por tipo.</span>"}</div>
+                <div class="poke-list">${strongSamples.map(p => `<span class="poke-tag">${p}</span>`).join("") || "<span class='mini'>Use como atacante neutro.</span>"}</div>
+              </div>
+              <div class="list-card bad">
+                <h3>Mais fraco contra</h3>
+                <div class="chips">${weakTypeChips || "<span class='mini'>Sem fraquezas comuns detectadas.</span>"}</div>
+                <div class="poke-list">${weakSamples.map(p => `<span class="poke-tag">${p}</span>`).join("") || "<span class='mini'>Boa resistência geral.</span>"}</div>
+              </div>
+            </div>
+          </div>
+
+          <div class="info-panel">
+            <h2 class="panel-title">Dicas de ataque</h2>
+            <div class="tips">
+              <div class="tip"><b>Plano</b><span class="mini">Entre contra alvos fracos a ${types.map(t => typeNames[t]).join(" / ")} e evite lutas longas contra counters.</span></div>
+              <div class="tip"><b>Escudos</b><span class="mini">Se o carregado for de alto dano, tente forçar escudo com o golpe mais barato antes.</span></div>
+              <div class="tip"><b>Troca</b><span class="mini">${weaknesses[0] ? `Cuidado especial com golpes ${typeNames[weaknesses[0].type]}.` : "Use a boa cobertura para trocar com menos medo."}</span></div>
+            </div>
+          </div>
+        </section>
+      `;
+    }
+
+    function typeChip(type, suffix = "") {
+      const color = typeColor[type] || "#cbd5e1";
+      return `<span class="chip" style="background:${color}">${typeNames[type] || type}${suffix ? " " + suffix : ""}</span>`;
+    }
+
+    async function search(value = input.value) {
+      const term = apiName(value);
+      if (!term) return;
+      errorBox.classList.remove("show");
+      suggestionsEl.classList.remove("show");
+      resultEl.innerHTML = `<section class="empty"><div><span class="loader"></span>Buscando ${value}...</div></section>`;
+      try {
+        const res = await fetch(`${API}/pokemon/${encodeURIComponent(term)}`);
+        if (!res.ok) throw new Error("not-found");
+        const pokemon = await res.json();
+        let species = null;
+        try {
+          const sp = await fetch(pokemon.species.url);
+          species = await sp.json();
+        } catch {}
+        input.value = displayName(pokemon.name);
+        renderPokemon(pokemon, species);
+      } catch (err) {
+        resultEl.innerHTML = `<section class="empty"><div class="empty-inner"><h2>Não encontrei esse Pokémon.</h2><p class="note">Tente o nome em inglês, número da Pokédex ou uma forma como <b>arcanine de hisui</b>.</p></div></section>`;
+        errorBox.textContent = "Não foi possível carregar esse Pokémon. Confira a grafia ou sua conexão.";
+        errorBox.classList.add("show");
+      }
+    }
+
+    input.addEventListener("input", renderSuggestions);
+    input.addEventListener("keydown", event => {
+      const items = [...suggestionsEl.querySelectorAll(".suggestion")];
+      if (event.key === "ArrowDown" && items.length) {
+        event.preventDefault();
+        activeSuggestion = (activeSuggestion + 1) % items.length;
+      } else if (event.key === "ArrowUp" && items.length) {
+        event.preventDefault();
+        activeSuggestion = (activeSuggestion - 1 + items.length) % items.length;
+      } else if (event.key === "Enter") {
+        event.preventDefault();
+        const chosen = items[activeSuggestion];
+        search(chosen?.dataset.name || input.value);
+      } else if (event.key === "Escape") {
+        suggestionsEl.classList.remove("show");
+      }
+      items.forEach((item, idx) => item.classList.toggle("active", idx === activeSuggestion));
+    });
+
+    suggestionsEl.addEventListener("click", event => {
+      const btn = event.target.closest(".suggestion");
+      if (btn) search(btn.dataset.name);
+    });
+
+    document.addEventListener("click", event => {
+      if (!event.target.closest(".search-zone")) suggestionsEl.classList.remove("show");
+    });
+
+    searchBtn.addEventListener("click", () => search());
+    loadList();
+  </script>
+</body>
+</html>
