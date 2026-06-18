@@ -680,6 +680,240 @@
       padding: 3px 7px;
       font-size: .64rem;
     }
+
+    .evaluator-view {
+      grid-column: 1 / -1;
+      display: grid;
+      gap: 14px;
+    }
+
+    .evaluator-grid {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 14px;
+    }
+
+    .scanner-panel {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) auto;
+      gap: 14px;
+      align-items: center;
+    }
+
+    .scanner-controls {
+      display: grid;
+      grid-template-columns: minmax(150px, .45fr) minmax(220px, 1fr);
+      gap: 10px;
+      align-items: end;
+    }
+
+    .scanner-file {
+      position: relative;
+      overflow: hidden;
+    }
+
+    .scanner-file input {
+      position: absolute;
+      width: 1px;
+      height: 1px;
+      opacity: 0;
+      pointer-events: none;
+    }
+
+    .evaluator-field.scanner-file label {
+      min-height: 42px;
+      border: 0;
+      border-radius: var(--radius);
+      padding: 0 14px;
+      background: var(--accent-2);
+      color: #0b1817;
+      font-weight: 900;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      text-transform: none;
+      font-size: .85rem;
+      letter-spacing: 0;
+    }
+
+    .scanner-status {
+      grid-column: 1 / -1;
+      color: var(--muted);
+      min-height: 20px;
+      font-size: .78rem;
+    }
+
+    .scanner-preview {
+      width: 92px;
+      height: 92px;
+      border-radius: var(--radius);
+      border: 1px solid rgba(255, 255, 255, .1);
+      background: #0f141d;
+      object-fit: cover;
+    }
+
+    .evaluator-member {
+      background: rgba(23, 28, 36, .86);
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      padding: 14px;
+      display: grid;
+      gap: 12px;
+      min-width: 0;
+    }
+
+    .evaluator-member-head {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      min-height: 58px;
+    }
+
+    .evaluator-member-head img {
+      width: 54px;
+      height: 54px;
+      object-fit: contain;
+    }
+
+    .evaluator-member-head b,
+    .evaluator-member-head small {
+      display: block;
+      overflow-wrap: anywhere;
+    }
+
+    .evaluator-member-head small {
+      color: var(--muted);
+      margin-top: 3px;
+    }
+
+    .evaluator-field {
+      display: grid;
+      gap: 6px;
+    }
+
+    .evaluator-field label {
+      color: var(--muted);
+      font-size: .72rem;
+      font-weight: 800;
+      text-transform: uppercase;
+    }
+
+    .evaluator-field input,
+    .evaluator-field select {
+      width: 100%;
+      min-height: 42px;
+      border: 1px solid rgba(255, 255, 255, .1);
+      border-radius: var(--radius);
+      background: #0f141d;
+      color: var(--text);
+      padding: 0 11px;
+      outline: none;
+    }
+
+    .evaluator-field input:focus,
+    .evaluator-field select:focus {
+      border-color: var(--accent-2);
+      box-shadow: 0 0 0 3px rgba(93, 214, 196, .14);
+    }
+
+    .evaluator-field select:disabled {
+      color: #77808d;
+      cursor: not-allowed;
+    }
+
+    .evaluator-ivs {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 8px;
+    }
+
+    .evaluator-actions {
+      display: flex;
+      justify-content: flex-end;
+    }
+
+    .evaluator-actions .go {
+      min-width: 210px;
+    }
+
+    .evaluation-results {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 14px;
+    }
+
+    .evaluation-card {
+      background: #0f141d;
+      border: 1px solid rgba(255, 255, 255, .08);
+      border-radius: var(--radius);
+      padding: 16px;
+      display: grid;
+      gap: 12px;
+    }
+
+    .evaluation-score {
+      display: flex;
+      align-items: baseline;
+      justify-content: space-between;
+      gap: 12px;
+    }
+
+    .evaluation-score strong {
+      color: var(--accent);
+      font-size: 2rem;
+    }
+
+    .evaluation-meter {
+      height: 10px;
+      overflow: hidden;
+      border-radius: 999px;
+      background: rgba(255, 255, 255, .09);
+    }
+
+    .evaluation-meter span {
+      display: block;
+      width: var(--score);
+      height: 100%;
+      background: var(--meter);
+    }
+
+    .evaluation-details {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 8px;
+    }
+
+    .evaluation-detail {
+      background: rgba(255, 255, 255, .04);
+      border-radius: var(--radius);
+      padding: 9px;
+      text-align: center;
+    }
+
+    .evaluation-detail b,
+    .evaluation-detail small {
+      display: block;
+    }
+
+    .evaluation-detail small {
+      color: var(--muted);
+      font-size: .66rem;
+      margin-bottom: 3px;
+    }
+
+    .evaluation-alerts {
+      display: grid;
+      gap: 6px;
+      color: var(--muted);
+      font-size: .78rem;
+    }
+
+    .evaluation-alerts .bad-note {
+      color: #ffb8c0;
+    }
+
     .empty {
       grid-column: 1 / -1;
       min-height: 430px;
@@ -731,6 +965,7 @@
       .tips { grid-template-columns: 1fr; }
       .target-grid { grid-template-columns: repeat(5, minmax(0, 1fr)); }
       .league-grid { grid-template-columns: 1fr; }
+      .evaluator-grid { grid-template-columns: 1fr; }
     }
 
     @media (max-width: 620px) {
@@ -748,6 +983,11 @@
       .team-member { grid-template-columns: 54px minmax(0, 1fr); justify-items: start; text-align: left; min-height: 92px; }
       .team-member img { grid-row: span 3; width: 54px; height: 54px; }
       .team-types { justify-content: flex-start; }
+      .evaluation-results { grid-template-columns: 1fr; }
+      .evaluation-details { grid-template-columns: 1fr; }
+      .evaluator-actions .go { width: 100%; }
+      .scanner-panel, .scanner-controls { grid-template-columns: 1fr; }
+      .scanner-preview { width: 100%; height: 150px; }
       h2 { font-size: 1.65rem; }
     }
   </style>
@@ -778,6 +1018,7 @@
       <button class="view-tab active" type="button" data-view="pokedex">Pokédex</button>
       <button class="view-tab" type="button" data-view="great">Grande Liga</button>
       <button class="view-tab" type="button" data-view="ultra">Ultra Liga</button>
+      <button class="view-tab" type="button" data-view="team-eval">Avaliar equipe</button>
     </nav>
 
     <main id="result">
@@ -896,6 +1137,24 @@
     let selectedPokemon = null;
     let currentView = "pokedex";
     const leaguePages = { great: 0, ultra: 0 };
+    const evaluatorMembers = Array.from({ length: 3 }, () => ({
+      pokemon: null,
+      fastId: "",
+      chargedId1: "",
+      chargedId2: "",
+      cp: "",
+      ivAttack: 15,
+      ivDefense: 15,
+      ivStamina: 15
+    }));
+    const scannerState = {
+      slot: 0,
+      preview: "",
+      status: "",
+      result: null,
+      busy: false
+    };
+    let ocrLibraryReady = null;
 
     function normalize(value = "") {
       return String(value)
@@ -1160,6 +1419,28 @@
         seen.add(key);
         return true;
       });
+    }
+
+    function moveId(move) {
+      return String(move?.id || move?.names?.English || moveName(move));
+    }
+
+    function availableFastMoves(pokemon) {
+      return uniqueMoves([
+        ...Object.values(pokemon?.quickMoves || {}),
+        ...Object.values(pokemon?.eliteQuickMoves || {})
+      ]);
+    }
+
+    function availableChargedMoves(pokemon) {
+      return uniqueMoves([
+        ...Object.values(pokemon?.cinematicMoves || {}),
+        ...Object.values(pokemon?.eliteCinematicMoves || {})
+      ]);
+    }
+
+    function findMoveById(moves, id) {
+      return moves.find(move => moveId(move) === id) || null;
     }
 
     function pickMoves(pokemon, types) {
@@ -1528,6 +1809,507 @@
         </div>
       `;
     }
+
+    function evaluatorMoveOption(move, selectedId) {
+      const id = moveId(move);
+      const type = moveType(move);
+      return `<option value="${encodeURIComponent(id)}"${id === selectedId ? " selected" : ""}>${moveName(move)} · ${typeNames[type] || type}</option>`;
+    }
+
+    function evaluatorMemberCard(member, slot) {
+      const pokemon = member.pokemon;
+      const image = pokemon ? pokemonImage(pokemon) : "";
+      const fastMoves = pokemon ? availableFastMoves(pokemon).sort((a, b) => scoreFastMove(b, pokemonTypes(pokemon)) - scoreFastMove(a, pokemonTypes(pokemon))) : [];
+      const chargedMoves = pokemon ? availableChargedMoves(pokemon).sort((a, b) => scoreChargedMove(b, pokemonTypes(pokemon)) - scoreChargedMove(a, pokemonTypes(pokemon))) : [];
+      const disabled = pokemon ? "" : " disabled";
+      return `
+        <article class="evaluator-member" data-slot="${slot}">
+          <div class="evaluator-member-head">
+            ${image ? `<img src="${image}" alt="${goDisplayName(pokemon)}">` : ""}
+            <div><b>${pokemon ? goDisplayName(pokemon) : `Pokémon ${slot + 1}`}</b><small>${pokemon ? pokemonTypes(pokemon).map(type => typeNames[type]).join(" / ") : "Escolha um integrante"}</small></div>
+          </div>
+          <div class="evaluator-field">
+            <label for="teamPokemon${slot}">Pokémon</label>
+            <div class="search-wrap">
+              <input class="team-pokemon-input" id="teamPokemon${slot}" data-slot="${slot}" type="search" autocomplete="off" value="${pokemon ? goDisplayName(pokemon) : ""}" placeholder="Digite nome, número ou forma">
+              <div class="suggestions team-suggestions" id="teamSuggestions${slot}" role="listbox"></div>
+            </div>
+          </div>
+          <div class="evaluator-field">
+            <label for="teamFast${slot}">Ataque ágil</label>
+            <select class="team-move-select" id="teamFast${slot}" data-slot="${slot}" data-field="fastId"${disabled}>
+              ${fastMoves.map(move => evaluatorMoveOption(move, member.fastId)).join("") || "<option>Escolha o Pokémon</option>"}
+            </select>
+          </div>
+          <div class="evaluator-field">
+            <label for="teamCharged1${slot}">Ataque carregado 1</label>
+            <select class="team-move-select" id="teamCharged1${slot}" data-slot="${slot}" data-field="chargedId1"${disabled}>
+              ${chargedMoves.map(move => evaluatorMoveOption(move, member.chargedId1)).join("") || "<option>Escolha o Pokémon</option>"}
+            </select>
+          </div>
+          <div class="evaluator-field">
+            <label for="teamCharged2${slot}">Ataque carregado 2</label>
+            <select class="team-move-select" id="teamCharged2${slot}" data-slot="${slot}" data-field="chargedId2"${disabled}>
+              ${chargedMoves.map(move => evaluatorMoveOption(move, member.chargedId2)).join("") || "<option>Escolha o Pokémon</option>"}
+            </select>
+          </div>
+          <div class="evaluator-field">
+            <label for="teamCp${slot}">PC</label>
+            <input class="team-number-input" id="teamCp${slot}" data-slot="${slot}" data-field="cp" type="number" min="10" max="10000" inputmode="numeric" value="${member.cp}" placeholder="Ex.: 1498">
+          </div>
+          <div class="evaluator-ivs">
+            ${[
+              ["ivAttack", "IV ATQ", member.ivAttack],
+              ["ivDefense", "IV DEF", member.ivDefense],
+              ["ivStamina", "IV PS", member.ivStamina]
+            ].map(([field, label, value]) => `
+              <div class="evaluator-field">
+                <label for="${field}${slot}">${label}</label>
+                <input class="team-number-input" id="${field}${slot}" data-slot="${slot}" data-field="${field}" type="number" min="0" max="15" inputmode="numeric" value="${value}">
+              </div>
+            `).join("")}
+          </div>
+        </article>
+      `;
+    }
+
+    function renderTeamEvaluator() {
+      if (!evaluatorMembers.some(member => member.pokemon) && selectedPokemon) {
+        setEvaluatorPokemon(0, selectedPokemon, false);
+      }
+      resultEl.innerHTML = `
+        <section class="evaluator-view">
+          <div class="info-panel league-head">
+            <h2 class="panel-title" style="margin:0">Avaliar minha equipe <span>Grande e Ultra Liga</span></h2>
+          </div>
+          <div class="info-panel scanner-panel">
+            <div class="scanner-controls">
+              <div class="evaluator-field">
+                <label for="scannerSlot">Adicionar ao integrante</label>
+                <select id="scannerSlot">
+                  ${evaluatorMembers.map((_, index) => `<option value="${index}"${scannerState.slot === index ? " selected" : ""}>Pokémon ${index + 1}</option>`).join("")}
+                </select>
+              </div>
+              <div class="evaluator-field scanner-file">
+                <label for="pokemonScreenshot">${scannerState.busy ? "Lendo captura..." : "Escanear captura de avaliação"}</label>
+                <input id="pokemonScreenshot" type="file" accept="image/*" capture="environment"${scannerState.busy ? " disabled" : ""}>
+              </div>
+              <div class="scanner-status" id="scannerStatus">${scannerState.status || "Use uma captura com nome, PC e as três barras de IV visíveis."}</div>
+            </div>
+            ${scannerState.preview ? `<img class="scanner-preview" src="${scannerState.preview}" alt="Captura selecionada">` : ""}
+          </div>
+          <div class="evaluator-grid">
+            ${evaluatorMembers.map(evaluatorMemberCard).join("")}
+          </div>
+          <div class="evaluator-actions">
+            <button class="go evaluate-team-run" type="button">Avaliar equipe</button>
+          </div>
+          <div id="teamEvaluationResult"></div>
+        </section>
+      `;
+    }
+
+    function loadOcrLibrary() {
+      if (window.Tesseract) return Promise.resolve(window.Tesseract);
+      if (ocrLibraryReady) return ocrLibraryReady;
+      ocrLibraryReady = new Promise((resolve, reject) => {
+        const script = document.createElement("script");
+        script.src = "https://cdn.jsdelivr.net/npm/tesseract.js@7/dist/tesseract.min.js";
+        script.onload = () => window.Tesseract ? resolve(window.Tesseract) : reject(new Error("OCR indisponível"));
+        script.onerror = () => reject(new Error("Não foi possível carregar o OCR"));
+        document.head.appendChild(script);
+      });
+      return ocrLibraryReady;
+    }
+
+    function fileToDataUrl(file) {
+      return new Promise((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onload = () => resolve(reader.result);
+        reader.onerror = reject;
+        reader.readAsDataURL(file);
+      });
+    }
+
+    function imageFromUrl(url) {
+      return new Promise((resolve, reject) => {
+        const image = new Image();
+        image.onload = () => resolve(image);
+        image.onerror = reject;
+        image.src = url;
+      });
+    }
+
+    function imageCanvas(image, maxWidth = 1400) {
+      const scale = Math.min(1, maxWidth / image.naturalWidth);
+      const canvas = document.createElement("canvas");
+      canvas.width = Math.max(1, Math.round(image.naturalWidth * scale));
+      canvas.height = Math.max(1, Math.round(image.naturalHeight * scale));
+      canvas.getContext("2d", { willReadFrequently: true }).drawImage(image, 0, 0, canvas.width, canvas.height);
+      return canvas;
+    }
+
+    function levenshtein(a, b) {
+      const previous = Array.from({ length: b.length + 1 }, (_, index) => index);
+      for (let i = 1; i <= a.length; i++) {
+        let diagonal = previous[0];
+        previous[0] = i;
+        for (let j = 1; j <= b.length; j++) {
+          const above = previous[j];
+          previous[j] = Math.min(
+            previous[j] + 1,
+            previous[j - 1] + 1,
+            diagonal + (a[i - 1] === b[j - 1] ? 0 : 1)
+          );
+          diagonal = above;
+        }
+      }
+      return previous[b.length];
+    }
+
+    function findPokemonFromOcr(text) {
+      const normalizedText = normalize(text);
+      const exact = pokemonList
+        .filter(entry => normalizedText.includes(normalize(entry.label)) || normalizedText.includes(normalize(goName(entry.pokemon))))
+        .sort((a, b) => normalize(b.label).length - normalize(a.label).length)[0];
+      if (exact) return exact.pokemon;
+      const fragments = String(text).split(/\r?\n|[|,;:]/).map(normalize).filter(value => value.length >= 4 && value.length <= 30);
+      let best = null;
+      pokemonList.forEach(entry => {
+        const label = normalize(entry.label);
+        fragments.forEach(fragment => {
+          const distance = levenshtein(fragment, label);
+          const similarity = 1 - distance / Math.max(fragment.length, label.length);
+          if (similarity >= .72 && (!best || similarity > best.similarity)) best = { pokemon: entry.pokemon, similarity };
+        });
+      });
+      return best?.pokemon || null;
+    }
+
+    function parseCpFromOcr(text) {
+      const direct = String(text).match(/\b(?:PC|CP)\s*[:.]?\s*([0-9][0-9 .]{1,5})/i);
+      if (!direct) return null;
+      const value = Number(direct[1].replace(/\D/g, ""));
+      return value >= 10 && value <= 10000 ? value : null;
+    }
+
+    function isIvFillPixel(r, g, b) {
+      return r >= 155 && r > g * 1.12 && g >= 35 && g <= 205 && b <= 145;
+    }
+
+    function isIvTrackPixel(r, g, b) {
+      const spread = Math.max(r, g, b) - Math.min(r, g, b);
+      return isIvFillPixel(r, g, b) || (r >= 105 && g >= 105 && b >= 105 && spread <= 55);
+    }
+
+    function detectIvBars(sourceCanvas) {
+      const scale = Math.min(1, 900 / sourceCanvas.width);
+      const canvas = document.createElement("canvas");
+      canvas.width = Math.round(sourceCanvas.width * scale);
+      canvas.height = Math.round(sourceCanvas.height * scale);
+      const ctx = canvas.getContext("2d", { willReadFrequently: true });
+      ctx.drawImage(sourceCanvas, 0, 0, canvas.width, canvas.height);
+      const { width, height } = canvas;
+      const pixels = ctx.getImageData(0, 0, width, height).data;
+      const startY = Math.floor(height * .32);
+      const endY = Math.floor(height * .94);
+      const rows = [];
+      for (let y = startY; y < endY; y++) {
+        let count = 0;
+        let minX = width;
+        let maxX = 0;
+        for (let x = 0; x < width; x++) {
+          const index = (y * width + x) * 4;
+          if (isIvFillPixel(pixels[index], pixels[index + 1], pixels[index + 2])) {
+            count++;
+            minX = Math.min(minX, x);
+            maxX = Math.max(maxX, x);
+          }
+        }
+        if (count > width * .035 && maxX - minX > width * .15) rows.push({ y, minX, maxX });
+      }
+      const bands = [];
+      rows.forEach(row => {
+        const band = bands[bands.length - 1];
+        if (band && row.y <= band.endY + 2) {
+          band.endY = row.y;
+          band.minX = Math.min(band.minX, row.minX);
+          band.maxX = Math.max(band.maxX, row.maxX);
+        } else {
+          bands.push({ startY: row.y, endY: row.y, minX: row.minX, maxX: row.maxX });
+        }
+      });
+      const candidates = bands
+        .filter(band => band.endY - band.startY <= Math.max(36, height * .035))
+        .sort((a, b) => a.startY - b.startY)
+        .slice(-3);
+      if (candidates.length !== 3) return null;
+      const measurements = candidates.map(band => {
+        const y = Math.round((band.startY + band.endY) / 2);
+        let fillStart = width;
+        let fillEnd = 0;
+        for (let x = 0; x < width; x++) {
+          const index = (y * width + x) * 4;
+          if (isIvFillPixel(pixels[index], pixels[index + 1], pixels[index + 2])) {
+            fillStart = Math.min(fillStart, x);
+            fillEnd = Math.max(fillEnd, x);
+          }
+        }
+        const sampleX = Math.min(width - 1, fillEnd + Math.max(2, Math.round(width * .004)));
+        const sampleIndex = (y * width + sampleX) * 4;
+        const sample = [pixels[sampleIndex], pixels[sampleIndex + 1], pixels[sampleIndex + 2]];
+        let trackEnd = fillEnd;
+        let gap = 0;
+        for (let x = fillEnd + 1; x < Math.min(width, fillStart + width * .65); x++) {
+          const index = (y * width + x) * 4;
+          const distance = Math.abs(pixels[index] - sample[0]) + Math.abs(pixels[index + 1] - sample[1]) + Math.abs(pixels[index + 2] - sample[2]);
+          if (isIvFillPixel(pixels[index], pixels[index + 1], pixels[index + 2]) || distance < 85) {
+            trackEnd = x;
+            gap = 0;
+          } else if (++gap > Math.max(4, width * .006)) {
+            break;
+          }
+        }
+        return { fillStart, fillEnd, trackEnd };
+      });
+      const median = values => [...values].sort((a, b) => a - b)[Math.floor(values.length / 2)];
+      const commonStart = median(measurements.map(item => item.fillStart));
+      const commonEnd = median(measurements.map(item => item.trackEnd));
+      const fullWidth = Math.max(1, commonEnd - commonStart + 1);
+      const values = measurements.map(item => clamp(Math.round(((item.fillEnd - item.fillStart + 1) / fullWidth) * 15), 0, 15));
+      return {
+        attack: values[0],
+        defense: values[1],
+        stamina: values[2],
+        confidence: values.every(value => Number.isFinite(value)) ? "estimada" : "baixa"
+      };
+    }
+
+    async function scanPokemonScreenshot(file) {
+      if (!file || scannerState.busy) return;
+      scannerState.busy = true;
+      scannerState.status = "Preparando imagem...";
+      scannerState.result = null;
+      scannerState.preview = await fileToDataUrl(file);
+      renderTeamEvaluator();
+      try {
+        await dataReady;
+        const image = await imageFromUrl(scannerState.preview);
+        const canvas = imageCanvas(image);
+        const ivs = detectIvBars(canvas);
+        const Tesseract = await loadOcrLibrary();
+        const worker = await Tesseract.createWorker("eng", 1, {
+          logger: message => {
+            if (message.status === "recognizing text") {
+              scannerState.status = `Lendo texto... ${Math.round((message.progress || 0) * 100)}%`;
+              const status = document.querySelector("#scannerStatus");
+              if (status) status.textContent = scannerState.status;
+            }
+          }
+        });
+        const recognition = await worker.recognize(canvas);
+        await worker.terminate();
+        const text = recognition.data?.text || "";
+        const pokemon = findPokemonFromOcr(text);
+        const cp = parseCpFromOcr(text);
+        const member = evaluatorMembers[scannerState.slot];
+        if (pokemon) setEvaluatorPokemon(scannerState.slot, pokemon, false);
+        if (cp) member.cp = cp;
+        if (ivs) {
+          member.ivAttack = ivs.attack;
+          member.ivDefense = ivs.defense;
+          member.ivStamina = ivs.stamina;
+        }
+        const found = [
+          pokemon ? goDisplayName(pokemon) : null,
+          cp ? `${cp} PC` : null,
+          ivs ? `IV ${ivs.attack}/${ivs.defense}/${ivs.stamina} (estimado)` : null
+        ].filter(Boolean);
+        scannerState.status = found.length ? `Preenchido: ${found.join(" · ")}.` : "Não consegui identificar os dados. Use uma captura da tela de avaliação e preencha manualmente.";
+      } catch (error) {
+        scannerState.status = "Não foi possível ler a imagem. Confira sua conexão ou preencha os dados manualmente.";
+      } finally {
+        scannerState.busy = false;
+        renderTeamEvaluator();
+      }
+    }
+
+    function teamSuggestionButtons(matches, slot) {
+      return matches.map((entry, idx) => `
+        <button class="suggestion team-eval-suggestion" type="button" data-slot="${slot}" data-form="${encodeURIComponent(entry.pokemon.formId || entry.pokemon.id || entry.name)}" data-idx="${idx}" role="option">
+          <span>${entry.label || goDisplayName(entry.pokemon)}</span>
+          <small>${typeof entry.index === "number" ? "#" + String(entry.index).padStart(3, "0") : entry.index}</small>
+        </button>
+      `).join("");
+    }
+
+    function findPokemonByForm(value) {
+      const decoded = decodeURIComponent(value || "");
+      return pokemonList.find(entry => String(entry.pokemon.formId || entry.pokemon.id) === decoded)?.pokemon || null;
+    }
+
+    function renderTeamSuggestions(inputEl) {
+      const slot = Number(inputEl.dataset.slot);
+      const suggestions = document.querySelector(`#teamSuggestions${slot}`);
+      if (!suggestions) return;
+      const matches = suggestionMatches(inputEl.value);
+      suggestions.innerHTML = teamSuggestionButtons(matches, slot);
+      suggestions.classList.toggle("show", matches.length > 0);
+    }
+
+    function setEvaluatorPokemon(slot, pokemon, rerender = true) {
+      const member = evaluatorMembers[slot];
+      if (!member || !pokemon) return;
+      const types = pokemonTypes(pokemon);
+      const fastMoves = availableFastMoves(pokemon).sort((a, b) => scoreFastMove(b, types) - scoreFastMove(a, types));
+      const chargedMoves = availableChargedMoves(pokemon).sort((a, b) => scoreChargedMove(b, types) - scoreChargedMove(a, types));
+      member.pokemon = pokemon;
+      member.fastId = moveId(fastMoves[0]);
+      member.chargedId1 = moveId(chargedMoves[0]);
+      member.chargedId2 = moveId(chargedMoves[1] || chargedMoves[0]);
+      member.cp = member.cp || Math.min(1500, estimateMaxCp(pokemon));
+      if (rerender) renderTeamEvaluator();
+    }
+
+    function selectedEvaluatorMoves(member) {
+      const fastMoves = availableFastMoves(member.pokemon);
+      const chargedMoves = availableChargedMoves(member.pokemon);
+      return {
+        fast: findMoveById(fastMoves, member.fastId) || fastMoves[0] || null,
+        charged: [
+          findMoveById(chargedMoves, member.chargedId1),
+          findMoveById(chargedMoves, member.chargedId2)
+        ].filter(Boolean)
+      };
+    }
+
+    function clamp(value, min, max) {
+      return Math.min(max, Math.max(min, value));
+    }
+
+    function evaluatorMoveQuality(member) {
+      const types = pokemonTypes(member.pokemon);
+      const fastMoves = availableFastMoves(member.pokemon);
+      const chargedMoves = availableChargedMoves(member.pokemon);
+      const chosen = selectedEvaluatorMoves(member);
+      const bestFast = Math.max(...fastMoves.map(move => scoreFastMove(move, types)), 1);
+      const bestCharged = chargedMoves.map(move => scoreChargedMove(move, types)).sort((a, b) => b - a);
+      const fastQuality = chosen.fast ? scoreFastMove(chosen.fast, types) / bestFast : 0;
+      const chargedQuality = chosen.charged.reduce((sum, move, idx) => sum + scoreChargedMove(move, types) / Math.max(bestCharged[idx] || bestCharged[0] || 1, 1), 0) / 2;
+      return clamp((fastQuality * .45 + chargedQuality * .55) * 100, 0, 100);
+    }
+
+    function evaluatorAttackTypes(member) {
+      const moves = selectedEvaluatorMoves(member);
+      return [...new Set([moves.fast, ...moves.charged].filter(Boolean).map(moveType))];
+    }
+
+    function teamSynergyScore(members) {
+      const weaknessCounts = new Map();
+      const attackTypes = new Set();
+      members.forEach(member => {
+        incomingWeaknesses(pokemonTypes(member.pokemon)).forEach(item => {
+          weaknessCounts.set(item.type, (weaknessCounts.get(item.type) || 0) + 1);
+        });
+        evaluatorAttackTypes(member).forEach(type => attackTypes.add(type));
+      });
+      const shared = [...weaknessCounts.values()].reduce((sum, count) => sum + (count > 1 ? (count - 1) * 10 : 0), 0);
+      return clamp(64 + attackTypes.size * 6 - shared, 10, 100);
+    }
+
+    function evaluateTeamForLeague(members, cap) {
+      const valid = members.filter(member => member.pokemon && Number(member.cp) > 0);
+      const alerts = [];
+      if (valid.length !== 3) {
+        return { score: 0, coverage: 0, readiness: 0, synergy: 0, alerts: ["Preencha os três Pokémon, PC, golpes e IVs."] };
+      }
+      const overCap = valid.filter(member => Number(member.cp) > cap);
+      overCap.forEach(member => alerts.push(`${goDisplayName(member.pokemon)} está acima de ${cap} PC.`));
+      const readiness = valid.reduce((sum, member) => {
+        const cp = Number(member.cp);
+        const cpUse = cp > cap ? 0 : clamp(cp / cap, .25, 1);
+        const ivTotal = clamp((Number(member.ivAttack) + Number(member.ivDefense) + Number(member.ivStamina)) / 45, 0, 1);
+        const ivBalance = clamp((Number(member.ivDefense) + Number(member.ivStamina)) / 30, 0, 1);
+        const moveQuality = evaluatorMoveQuality(member) / 100;
+        return sum + (cpUse * 48 + moveQuality * 37 + (ivTotal * .45 + ivBalance * .55) * 15);
+      }, 0) / 3;
+      const benchmarks = leagueCandidates(cap).slice(0, 42);
+      const coverage = benchmarks.reduce((sum, opponent) => {
+        const opponentTypes = pokemonTypes(opponent.pokemon);
+        const opponentAttacks = pickMoves(opponent.pokemon, opponentTypes).attackTypes;
+        const bestMatch = Math.max(...valid.map(member => {
+          if (Number(member.cp) > cap) return .15;
+          const memberTypes = pokemonTypes(member.pokemon);
+          const offense = bestAttackValue(evaluatorAttackTypes(member), opponentTypes);
+          const incoming = bestAttackValue(opponentAttacks, memberTypes);
+          const quality = .78 + evaluatorMoveQuality(member) / 455;
+          const cpFactor = .72 + clamp(Number(member.cp) / cap, 0, 1) * .28;
+          return (offense / Math.max(incoming, .25)) * quality * cpFactor;
+        }));
+        return sum + clamp(50 + Math.log2(Math.max(bestMatch, .1)) * 27, 10, 94);
+      }, 0) / Math.max(benchmarks.length, 1);
+      const synergy = teamSynergyScore(valid);
+      let score = coverage * .55 + readiness * .3 + synergy * .15;
+      if (overCap.length) score -= overCap.length * 18;
+      score = Math.round(clamp(score, 0, 97));
+      const sharedWeaknesses = Object.keys(typeNames).filter(type => valid.filter(member => incomingEffectiveness(type, pokemonTypes(member.pokemon)) > 1).length >= 2);
+      if (sharedWeaknesses.length) alerts.push(`Fraquezas repetidas: ${sharedWeaknesses.map(type => typeNames[type]).join(", ")}.`);
+      const weakMoves = valid.filter(member => evaluatorMoveQuality(member) < 72);
+      if (weakMoves.length) alerts.push(`Revise os golpes de: ${weakMoves.map(member => goDisplayName(member.pokemon)).join(", ")}.`);
+      return {
+        score,
+        coverage: Math.round(coverage),
+        readiness: Math.round(readiness),
+        synergy: Math.round(synergy),
+        alerts
+      };
+    }
+
+    function evaluationLabel(score) {
+      if (score >= 82) return "Muito competitiva";
+      if (score >= 68) return "Competitiva";
+      if (score >= 52) return "Situacional";
+      return "Precisa de ajustes";
+    }
+
+    function evaluationCard(title, cap, result) {
+      const meter = result.score >= 68 ? "#5dd6c4" : result.score >= 52 ? "#f4cc5d" : "#ff6b7a";
+      return `
+        <article class="evaluation-card">
+          <div class="evaluation-score">
+            <div><h3 style="margin:0">${title}</h3><span class="mini">Limite: ${cap} PC</span></div>
+            <strong>${result.score}%</strong>
+          </div>
+          <div class="evaluation-meter" style="--score:${result.score}%;--meter:${meter}"><span></span></div>
+          <b>${evaluationLabel(result.score)}</b>
+          <div class="evaluation-details">
+            <div class="evaluation-detail"><small>Cobertura</small><b>${result.coverage}%</b></div>
+            <div class="evaluation-detail"><small>Preparação</small><b>${result.readiness}%</b></div>
+            <div class="evaluation-detail"><small>Sinergia</small><b>${result.synergy}%</b></div>
+          </div>
+          <div class="evaluation-alerts">
+            ${result.alerts.length ? result.alerts.map(alert => `<span class="bad-note">${alert}</span>`).join("") : "<span>Sem problemas importantes detectados.</span>"}
+          </div>
+        </article>
+      `;
+    }
+
+    function evaluateConfiguredTeam() {
+      const output = document.querySelector("#teamEvaluationResult");
+      if (!output) return;
+      const great = evaluateTeamForLeague(evaluatorMembers, 1500);
+      const ultra = evaluateTeamForLeague(evaluatorMembers, 2500);
+      output.innerHTML = `
+        <div class="info-panel">
+          <h2 class="panel-title">Estimativa de desempenho <span>Comparação com adversários da liga</span></h2>
+          <div class="evaluation-results">
+            ${evaluationCard("Grande Liga", 1500, great)}
+            ${evaluationCard("Ultra Liga", 2500, ultra)}
+          </div>
+        </div>
+      `;
+    }
+
     function typeChip(type, suffix = "") {
       const color = typeColor[type] || "#cbd5e1";
       return `<span class="chip" style="background:${color}">${typeNames[type] || type}${suffix ? " " + suffix : ""}</span>`;
@@ -1594,6 +2376,13 @@
         runCompare();
       }
       if (event.target.closest(".compare-run")) runCompare();
+      const teamSuggestion = event.target.closest(".team-eval-suggestion");
+      if (teamSuggestion) {
+        const slot = Number(teamSuggestion.dataset.slot);
+        const pokemon = findPokemonByForm(teamSuggestion.dataset.form);
+        if (pokemon) setEvaluatorPokemon(slot, pokemon);
+      }
+      if (event.target.closest(".evaluate-team-run")) evaluateConfiguredTeam();
       const leagueRefresh = event.target.closest(".league-refresh");
       if (leagueRefresh) {
         const view = leagueRefresh.dataset.view || currentView;
@@ -1605,9 +2394,42 @@
 
     resultEl.addEventListener("input", event => {
       if (event.target.closest("#compareInput")) renderCompareSuggestions();
+      const teamInput = event.target.closest(".team-pokemon-input");
+      if (teamInput) renderTeamSuggestions(teamInput);
+      const numberInput = event.target.closest(".team-number-input");
+      if (numberInput) {
+        const member = evaluatorMembers[Number(numberInput.dataset.slot)];
+        if (member) member[numberInput.dataset.field] = numberInput.value;
+      }
+    });
+
+    resultEl.addEventListener("change", event => {
+      const scannerSlot = event.target.closest("#scannerSlot");
+      if (scannerSlot) {
+        scannerState.slot = Number(scannerSlot.value);
+        return;
+      }
+      const screenshot = event.target.closest("#pokemonScreenshot");
+      if (screenshot?.files?.[0]) {
+        scanPokemonScreenshot(screenshot.files[0]);
+        return;
+      }
+      const select = event.target.closest(".team-move-select");
+      if (!select) return;
+      const member = evaluatorMembers[Number(select.dataset.slot)];
+      if (member) member[select.dataset.field] = decodeURIComponent(select.value);
     });
 
     resultEl.addEventListener("keydown", event => {
+      const teamInput = event.target.closest(".team-pokemon-input");
+      if (teamInput && event.key === "Enter") {
+        event.preventDefault();
+        const slot = Number(teamInput.dataset.slot);
+        const chosen = document.querySelector(`#teamSuggestions${slot} .team-eval-suggestion`);
+        const pokemon = chosen ? findPokemonByForm(chosen.dataset.form) : findPokemon(apiName(teamInput.value));
+        if (pokemon) setEvaluatorPokemon(slot, pokemon);
+        return;
+      }
       const compareInput = event.target.closest("#compareInput");
       if (!compareInput) return;
       const compareSuggestions = document.querySelector("#compareSuggestions");
@@ -1635,6 +2457,7 @@
     document.addEventListener("click", event => {
       if (!event.target.closest(".search-zone")) suggestionsEl.classList.remove("show");
       if (!event.target.closest(".compare-box")) document.querySelector("#compareSuggestions")?.classList.remove("show");
+      if (!event.target.closest(".evaluator-member")) document.querySelectorAll(".team-suggestions").forEach(el => el.classList.remove("show"));
     });
 
     viewTabs.forEach(tab => {
@@ -1643,6 +2466,10 @@
         setActiveView(view);
         if (view === "pokedex") {
           resultEl.innerHTML = `<section class="empty"><div class="empty-inner"><h2>Digite um Pokémon para começar.</h2><p class="note">Experimente <b>arcanine de hisui</b>, <b>charizard</b>, <b>mewtwo</b> ou um número da Pokédex. As sugestões aparecem enquanto você escreve.</p></div></section>`;
+          return;
+        }
+        if (view === "team-eval") {
+          renderTeamEvaluator();
           return;
         }
         renderLeague(view);
