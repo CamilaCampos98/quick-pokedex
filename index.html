@@ -1892,7 +1892,7 @@
               </div>
               <div class="evaluator-field scanner-file">
                 <label for="pokemonScreenshot">${scannerState.busy ? "Lendo captura..." : "Escanear captura de avaliação"}</label>
-                <input id="pokemonScreenshot" type="file" accept="image/*" capture="environment"${scannerState.busy ? " disabled" : ""}>
+                <input id="pokemonScreenshot" type="file" accept="image/*"${scannerState.busy ? " disabled" : ""}>
               </div>
               <div class="scanner-status" id="scannerStatus">${scannerState.status || "Use uma captura com nome, PC e as três barras de IV visíveis."}</div>
             </div>
@@ -2480,6 +2480,7 @@
   </script>
 </body>
 </html>
+
 
 
 
