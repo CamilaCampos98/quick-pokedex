@@ -753,6 +753,115 @@
       object-fit: cover;
     }
 
+    .batch-panel {
+      display: grid;
+      gap: 12px;
+    }
+
+    .batch-controls {
+      display: grid;
+      grid-template-columns: auto minmax(240px, 1fr);
+      gap: 10px;
+      align-items: end;
+    }
+
+    .batch-league {
+      display: flex;
+      gap: 6px;
+    }
+
+    .batch-league button {
+      min-height: 42px;
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      background: #0f141d;
+      color: var(--text);
+      padding: 0 12px;
+      font-weight: 800;
+      cursor: pointer;
+    }
+
+    .batch-league button.active {
+      background: var(--accent);
+      border-color: transparent;
+      color: #18140a;
+    }
+
+    .batch-results {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 10px;
+    }
+
+    .batch-team {
+      background: #0f141d;
+      border: 1px solid rgba(255, 255, 255, .08);
+      border-radius: var(--radius);
+      padding: 12px;
+      display: grid;
+      gap: 10px;
+    }
+
+    .batch-team-head {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .batch-team-head strong:last-child {
+      color: var(--accent);
+      font-size: 1.25rem;
+    }
+
+    .batch-score {
+      text-align: right;
+    }
+
+    .batch-score strong,
+    .batch-score small {
+      display: block;
+    }
+
+    .batch-score strong {
+      color: var(--accent);
+      font-size: 1.25rem;
+    }
+
+    .batch-score small {
+      color: var(--muted);
+      font-size: .62rem;
+    }
+
+    .batch-team-members {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 7px;
+    }
+
+    .batch-team-member {
+      min-width: 0;
+      text-align: center;
+      display: grid;
+      justify-items: center;
+      gap: 4px;
+      color: var(--muted);
+      font-size: .68rem;
+    }
+
+    .batch-team-member img {
+      width: 48px;
+      height: 48px;
+      object-fit: contain;
+    }
+
+    .batch-team-member b {
+      width: 100%;
+      color: var(--text);
+      font-size: .72rem;
+      overflow-wrap: anywhere;
+    }
+
     .evaluator-member {
       background: rgba(23, 28, 36, .86);
       border: 1px solid var(--line);
@@ -966,6 +1075,7 @@
       .target-grid { grid-template-columns: repeat(5, minmax(0, 1fr)); }
       .league-grid { grid-template-columns: 1fr; }
       .evaluator-grid { grid-template-columns: 1fr; }
+      .batch-results { grid-template-columns: 1fr; }
     }
 
     @media (max-width: 620px) {
@@ -988,6 +1098,8 @@
       .evaluator-actions .go { width: 100%; }
       .scanner-panel, .scanner-controls { grid-template-columns: 1fr; }
       .scanner-preview { width: 100%; height: 150px; }
+      .batch-controls { grid-template-columns: 1fr; }
+      .batch-league { display: grid; grid-template-columns: repeat(2, 1fr); }
       h2 { font-size: 1.65rem; }
     }
   </style>
@@ -1153,6 +1265,13 @@
       status: "",
       result: null,
       busy: false
+    };
+    const batchState = {
+      league: "great",
+      busy: false,
+      status: "",
+      scanned: [],
+      teams: []
     };
     let ocrLibraryReady = null;
 
@@ -1898,6 +2017,24 @@
             </div>
             ${scannerState.preview ? `<img class="scanner-preview" src="${scannerState.preview}" alt="Captura selecionada">` : ""}
           </div>
+          <div class="info-panel batch-panel">
+            <h2 class="panel-title" style="margin:0">Montar equipes pelos prints <span>Até 10 Pokémon</span></h2>
+            <div class="batch-controls">
+              <div class="evaluator-field">
+                <label>Liga</label>
+                <div class="batch-league">
+                  <button type="button" class="batch-league-button${batchState.league === "great" ? " active" : ""}" data-league="great">Grande</button>
+                  <button type="button" class="batch-league-button${batchState.league === "ultra" ? " active" : ""}" data-league="ultra">Ultra</button>
+                </div>
+              </div>
+              <div class="evaluator-field scanner-file">
+                <label for="batchScreenshots">${batchState.busy ? "Analisando capturas..." : "Escolher até 10 prints"}</label>
+                <input id="batchScreenshots" type="file" accept="image/*" multiple${batchState.busy ? " disabled" : ""}>
+              </div>
+            </div>
+            <div class="scanner-status" id="batchStatus">${batchState.status || "Envie as telas de avaliação com nome, PC e barras de IV visíveis."}</div>
+            ${renderBatchResults()}
+          </div>
           <div class="evaluator-grid">
             ${evaluatorMembers.map(evaluatorMemberCard).join("")}
           </div>
@@ -1972,6 +2109,31 @@
       }
       ctx.putImageData(image, 0, 0);
       return canvas;
+    }
+
+    async function recognizeScreenshot(file, worker, progress) {
+      const preview = await fileToDataUrl(file);
+      const image = await imageFromUrl(preview);
+      const canvas = imageCanvas(image);
+      const ivs = detectIvBars(canvas);
+      await worker.setParameters({
+        tessedit_char_whitelist: "",
+        tessedit_pageseg_mode: "3"
+      });
+      const recognition = await worker.recognize(canvas);
+      await worker.setParameters({
+        tessedit_char_whitelist: "PCpc0123456789 ",
+        tessedit_pageseg_mode: "11"
+      });
+      const cpRecognition = await worker.recognize(cpOcrCanvas(canvas));
+      const text = recognition.data?.text || "";
+      if (progress) progress();
+      return {
+        preview,
+        pokemon: findPokemonFromOcr(text),
+        cp: parseCpFromOcr(text) || parseCpFromOcr(cpRecognition.data?.text || "", true),
+        ivs
+      };
     }
 
     function levenshtein(a, b) {
@@ -2160,9 +2322,6 @@
       renderTeamEvaluator();
       try {
         await dataReady;
-        const image = await imageFromUrl(scannerState.preview);
-        const canvas = imageCanvas(image);
-        const ivs = detectIvBars(canvas);
         const Tesseract = await loadOcrLibrary();
         const worker = await Tesseract.createWorker("eng", 1, {
           logger: message => {
@@ -2173,16 +2332,9 @@
             }
           }
         });
-        const recognition = await worker.recognize(canvas);
-        await worker.setParameters({
-          tessedit_char_whitelist: "PCpc0123456789 ",
-          tessedit_pageseg_mode: "11"
-        });
-        const cpRecognition = await worker.recognize(cpOcrCanvas(canvas));
+        const scanned = await recognizeScreenshot(file, worker);
         await worker.terminate();
-        const text = recognition.data?.text || "";
-        const pokemon = findPokemonFromOcr(text);
-        const cp = parseCpFromOcr(text) || parseCpFromOcr(cpRecognition.data?.text || "", true);
+        const { pokemon, cp, ivs } = scanned;
         const member = evaluatorMembers[targetSlot];
         if (pokemon) setEvaluatorPokemon(targetSlot, pokemon, false);
         if (cp) member.cp = cp;
@@ -2373,6 +2525,119 @@
       `;
     }
 
+    function scannedEvaluatorMember(scanned) {
+      const pokemon = scanned.pokemon;
+      const types = pokemonTypes(pokemon);
+      const fastMoves = availableFastMoves(pokemon).sort((a, b) => scoreFastMove(b, types) - scoreFastMove(a, types));
+      const chargedMoves = availableChargedMoves(pokemon).sort((a, b) => scoreChargedMove(b, types) - scoreChargedMove(a, types));
+      return {
+        pokemon,
+        cp: scanned.cp,
+        ivAttack: scanned.ivs.attack,
+        ivDefense: scanned.ivs.defense,
+        ivStamina: scanned.ivs.stamina,
+        fastId: moveId(fastMoves[0]),
+        chargedId1: moveId(chargedMoves[0]),
+        chargedId2: moveId(chargedMoves[1] || chargedMoves[0])
+      };
+    }
+
+    function bestBatchTeams(scanned, league) {
+      const cap = league === "ultra" ? 2500 : 1500;
+      const eligible = scanned
+        .filter(item => item.pokemon && item.cp && item.ivs && item.cp <= cap)
+        .map(scannedEvaluatorMember);
+      const combinations = [];
+      for (let first = 0; first < eligible.length - 2; first++) {
+        for (let second = first + 1; second < eligible.length - 1; second++) {
+          for (let third = second + 1; third < eligible.length; third++) {
+            const members = [eligible[first], eligible[second], eligible[third]];
+            const forms = new Set(members.map(member => member.pokemon.formId || member.pokemon.id));
+            if (forms.size !== 3) continue;
+            const result = evaluateTeamForLeague(members, cap);
+            combinations.push({ members, result });
+          }
+        }
+      }
+      return combinations
+        .sort((a, b) => b.result.score - a.result.score || b.result.coverage - a.result.coverage || b.result.synergy - a.result.synergy)
+        .slice(0, 4);
+    }
+
+    function batchTeamMember(member) {
+      const image = pokemonImage(member.pokemon);
+      return `
+        <div class="batch-team-member">
+          ${image ? `<img src="${image}" alt="${goDisplayName(member.pokemon)}">` : ""}
+          <b>${goDisplayName(member.pokemon)}</b>
+          <span>${member.cp} PC · ${member.ivAttack}/${member.ivDefense}/${member.ivStamina}</span>
+        </div>
+      `;
+    }
+
+    function renderBatchResults() {
+      if (!batchState.teams.length) return "";
+      const leagueName = batchState.league === "ultra" ? "Ultra Liga" : "Grande Liga";
+      return `
+        <div class="batch-results">
+          ${batchState.teams.map((team, index) => `
+            <article class="batch-team">
+              <div class="batch-team-head">
+                <strong>Equipe ${index + 1}</strong>
+                <div class="batch-score"><strong>${team.result.score}%</strong><small>sucesso estimado</small></div>
+              </div>
+              <div class="batch-team-members">${team.members.map(batchTeamMember).join("")}</div>
+              <span class="mini">${leagueName} · Cobertura ${team.result.coverage}% · Sinergia ${team.result.synergy}%</span>
+            </article>
+          `).join("")}
+        </div>
+      `;
+    }
+
+    async function scanBatchScreenshots(files) {
+      if (batchState.busy) return;
+      const selected = [...files].slice(0, 10);
+      if (selected.length < 3) {
+        batchState.status = "Escolha pelo menos 3 prints.";
+        batchState.teams = [];
+        renderTeamEvaluator();
+        return;
+      }
+      batchState.busy = true;
+      batchState.scanned = [];
+      batchState.teams = [];
+      batchState.status = `Preparando ${selected.length} capturas...`;
+      renderTeamEvaluator();
+      let worker;
+      try {
+        await dataReady;
+        const Tesseract = await loadOcrLibrary();
+        worker = await Tesseract.createWorker("eng");
+        for (let index = 0; index < selected.length; index++) {
+          batchState.status = `Lendo print ${index + 1} de ${selected.length}...`;
+          const status = document.querySelector("#batchStatus");
+          if (status) status.textContent = batchState.status;
+          const scanned = await recognizeScreenshot(selected[index], worker);
+          if (scanned.pokemon && scanned.cp && scanned.ivs) batchState.scanned.push(scanned);
+        }
+        batchState.teams = bestBatchTeams(batchState.scanned, batchState.league);
+        const rejected = selected.length - batchState.scanned.length;
+        const cap = batchState.league === "ultra" ? 2500 : 1500;
+        const eligible = batchState.scanned.filter(item => item.cp <= cap).length;
+        if (batchState.teams.length) {
+          batchState.status = `${batchState.scanned.length} Pokémon reconhecidos · ${eligible} válidos para a liga${rejected ? ` · ${rejected} prints não reconhecidos` : ""}.`;
+        } else {
+          batchState.status = `Não há 3 Pokémon válidos até ${cap} PC. Reconhecidos: ${batchState.scanned.length}.`;
+        }
+      } catch (error) {
+        batchState.status = "Não foi possível concluir a leitura dos prints. Tente novamente com as telas de avaliação completas.";
+      } finally {
+        if (worker) await worker.terminate().catch(() => {});
+        batchState.busy = false;
+        renderTeamEvaluator();
+      }
+    }
+
     function evaluateConfiguredTeam() {
       const output = document.querySelector("#teamEvaluationResult");
       if (!output) return;
@@ -2462,6 +2727,15 @@
         if (pokemon) setEvaluatorPokemon(slot, pokemon);
       }
       if (event.target.closest(".evaluate-team-run")) evaluateConfiguredTeam();
+      const batchLeague = event.target.closest(".batch-league-button");
+      if (batchLeague) {
+        batchState.league = batchLeague.dataset.league;
+        batchState.teams = bestBatchTeams(batchState.scanned, batchState.league);
+        batchState.status = batchState.scanned.length
+          ? `${batchState.scanned.length} Pokémon reconhecidos. Equipes recalculadas para ${batchState.league === "ultra" ? "Ultra Liga" : "Grande Liga"}.`
+          : batchState.status;
+        renderTeamEvaluator();
+      }
       const leagueRefresh = event.target.closest(".league-refresh");
       if (leagueRefresh) {
         const view = leagueRefresh.dataset.view || currentView;
@@ -2491,6 +2765,11 @@
       const screenshot = event.target.closest("#pokemonScreenshot");
       if (screenshot?.files?.[0]) {
         scanPokemonScreenshot(screenshot.files[0]);
+        return;
+      }
+      const batchScreenshots = event.target.closest("#batchScreenshots");
+      if (batchScreenshots?.files?.length) {
+        scanBatchScreenshots(batchScreenshots.files);
         return;
       }
       const select = event.target.closest(".team-move-select");
