@@ -1999,7 +1999,7 @@
 
     function isIvTrackPixel(r, g, b) {
       const spread = Math.max(r, g, b) - Math.min(r, g, b);
-      return isIvFillPixel(r, g, b) || (r >= 105 && g >= 105 && b >= 105 && spread <= 55);
+      return isIvFillPixel(r, g, b) || (r >= 130 && r <= 242 && g >= 130 && g <= 242 && b >= 130 && b <= 242 && spread <= 35);
     }
 
     function detectIvBars(sourceCanvas) {
@@ -2015,18 +2015,34 @@
       const endY = Math.floor(height * .94);
       const rows = [];
       for (let y = startY; y < endY; y++) {
-        let count = 0;
-        let minX = width;
-        let maxX = 0;
-        for (let x = 0; x < width; x++) {
+        let best = null;
+        let startX = -1;
+        let lastTrackX = -1;
+        let trackCount = 0;
+        const allowedGap = Math.max(5, Math.round(width * .009));
+        const scanEnd = Math.floor(width * .86);
+        const finishRun = () => {
+          if (startX < 0 || lastTrackX < startX) return;
+          const run = { minX: startX, maxX: lastTrackX, count: trackCount };
+          if (!best || run.maxX - run.minX > best.maxX - best.minX) best = run;
+          startX = -1;
+          lastTrackX = -1;
+          trackCount = 0;
+        };
+        for (let x = 0; x < scanEnd; x++) {
           const index = (y * width + x) * 4;
-          if (isIvFillPixel(pixels[index], pixels[index + 1], pixels[index + 2])) {
-            count++;
-            minX = Math.min(minX, x);
-            maxX = Math.max(maxX, x);
+          if (isIvTrackPixel(pixels[index], pixels[index + 1], pixels[index + 2])) {
+            if (startX < 0) startX = x;
+            lastTrackX = x;
+            trackCount++;
+          } else if (startX >= 0 && x - lastTrackX > allowedGap) {
+            finishRun();
           }
         }
-        if (count > width * .035 && maxX - minX > width * .15) rows.push({ y, minX, maxX });
+        finishRun();
+        if (best && best.count > width * .12 && best.maxX - best.minX > width * .2) {
+          rows.push({ y, minX: best.minX, maxX: best.maxX });
+        }
       }
       const bands = [];
       rows.forEach(row => {
@@ -2039,44 +2055,52 @@
           bands.push({ startY: row.y, endY: row.y, minX: row.minX, maxX: row.maxX });
         }
       });
-      const candidates = bands
-        .filter(band => band.endY - band.startY <= Math.max(36, height * .035))
-        .sort((a, b) => a.startY - b.startY)
-        .slice(-3);
-      if (candidates.length !== 3) return null;
-      const measurements = candidates.map(band => {
+      const bandCandidates = bands
+        .filter(band => {
+          const bandHeight = band.endY - band.startY + 1;
+          return bandHeight >= 3 && bandHeight <= Math.max(36, height * .035);
+        })
+        .sort((a, b) => a.startY - b.startY);
+      let candidates = null;
+      let bestTripletScore = Infinity;
+      for (let first = 0; first < bandCandidates.length - 2; first++) {
+        for (let second = first + 1; second < bandCandidates.length - 1; second++) {
+          for (let third = second + 1; third < bandCandidates.length; third++) {
+            const triplet = [bandCandidates[first], bandCandidates[second], bandCandidates[third]];
+            const centers = triplet.map(band => (band.startY + band.endY) / 2);
+            const gaps = [centers[1] - centers[0], centers[2] - centers[1]];
+            if (Math.min(...gaps) < height * .02 || Math.max(...gaps) > height * .12) continue;
+            const starts = triplet.map(band => band.minX);
+            const widths = triplet.map(band => band.maxX - band.minX);
+            const score =
+              Math.abs(gaps[0] - gaps[1]) * 5 +
+              (Math.max(...starts) - Math.min(...starts)) * 2 +
+              (Math.max(...widths) - Math.min(...widths));
+            if (score < bestTripletScore) {
+              bestTripletScore = score;
+              candidates = triplet;
+            }
+          }
+        }
+      }
+      if (!candidates || candidates.length !== 3) return null;
+      const values = candidates.map(band => {
         const y = Math.round((band.startY + band.endY) / 2);
+        const trackStart = band.minX;
+        const trackEnd = band.maxX;
         let fillStart = width;
-        let fillEnd = 0;
-        for (let x = 0; x < width; x++) {
+        let fillEnd = -1;
+        for (let x = trackStart; x <= trackEnd; x++) {
           const index = (y * width + x) * 4;
           if (isIvFillPixel(pixels[index], pixels[index + 1], pixels[index + 2])) {
             fillStart = Math.min(fillStart, x);
             fillEnd = Math.max(fillEnd, x);
           }
         }
-        const sampleX = Math.min(width - 1, fillEnd + Math.max(2, Math.round(width * .004)));
-        const sampleIndex = (y * width + sampleX) * 4;
-        const sample = [pixels[sampleIndex], pixels[sampleIndex + 1], pixels[sampleIndex + 2]];
-        let trackEnd = fillEnd;
-        let gap = 0;
-        for (let x = fillEnd + 1; x < Math.min(width, fillStart + width * .65); x++) {
-          const index = (y * width + x) * 4;
-          const distance = Math.abs(pixels[index] - sample[0]) + Math.abs(pixels[index + 1] - sample[1]) + Math.abs(pixels[index + 2] - sample[2]);
-          if (isIvFillPixel(pixels[index], pixels[index + 1], pixels[index + 2]) || distance < 85) {
-            trackEnd = x;
-            gap = 0;
-          } else if (++gap > Math.max(4, width * .006)) {
-            break;
-          }
-        }
-        return { fillStart, fillEnd, trackEnd };
+        const trackWidth = Math.max(1, trackEnd - trackStart + 1);
+        const fillWidth = fillEnd >= fillStart ? fillEnd - fillStart + 1 : 0;
+        return clamp(Math.round((fillWidth / trackWidth) * 15), 0, 15);
       });
-      const median = values => [...values].sort((a, b) => a - b)[Math.floor(values.length / 2)];
-      const commonStart = median(measurements.map(item => item.fillStart));
-      const commonEnd = median(measurements.map(item => item.trackEnd));
-      const fullWidth = Math.max(1, commonEnd - commonStart + 1);
-      const values = measurements.map(item => clamp(Math.round(((item.fillEnd - item.fillStart + 1) / fullWidth) * 15), 0, 15));
       return {
         attack: values[0],
         defense: values[1],
