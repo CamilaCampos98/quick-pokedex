@@ -2087,6 +2087,7 @@
 
     async function scanPokemonScreenshot(file) {
       if (!file || scannerState.busy) return;
+      const targetSlot = scannerState.slot;
       scannerState.busy = true;
       scannerState.status = "Preparando imagem...";
       scannerState.result = null;
@@ -2112,8 +2113,8 @@
         const text = recognition.data?.text || "";
         const pokemon = findPokemonFromOcr(text);
         const cp = parseCpFromOcr(text);
-        const member = evaluatorMembers[scannerState.slot];
-        if (pokemon) setEvaluatorPokemon(scannerState.slot, pokemon, false);
+        const member = evaluatorMembers[targetSlot];
+        if (pokemon) setEvaluatorPokemon(targetSlot, pokemon, false);
         if (cp) member.cp = cp;
         if (ivs) {
           member.ivAttack = ivs.attack;
@@ -2126,6 +2127,14 @@
           ivs ? `IV ${ivs.attack}/${ivs.defense}/${ivs.stamina} (estimado)` : null
         ].filter(Boolean);
         scannerState.status = found.length ? `Preenchido: ${found.join(" · ")}.` : "Não consegui identificar os dados. Use uma captura da tela de avaliação e preencha manualmente.";
+        if (found.length) {
+          const nextEmptySlot = evaluatorMembers.findIndex((candidate, index) => index > targetSlot && !candidate.pokemon);
+          const anyEmptySlot = evaluatorMembers.findIndex(candidate => !candidate.pokemon);
+          scannerState.slot = nextEmptySlot >= 0 ? nextEmptySlot : anyEmptySlot >= 0 ? anyEmptySlot : targetSlot;
+          if (scannerState.slot !== targetSlot) {
+            scannerState.status += ` Próxima captura: Pokémon ${scannerState.slot + 1}.`;
+          }
+        }
       } catch (error) {
         scannerState.status = "Não foi possível ler a imagem. Confira sua conexão ou preencha os dados manualmente.";
       } finally {
