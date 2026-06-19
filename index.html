@@ -2128,9 +2128,10 @@
       const cpRecognition = await worker.recognize(cpOcrCanvas(canvas));
       const text = recognition.data?.text || "";
       if (progress) progress();
+      const recognizedPokemon = findPokemonFromOcr(text);
       return {
         preview,
-        pokemon: findPokemonFromOcr(text),
+        pokemon: resolvePokemonForm(recognizedPokemon, text, canvas),
         cp: parseCpFromOcr(text) || parseCpFromOcr(cpRecognition.data?.text || "", true),
         ivs
       };
@@ -2156,6 +2157,24 @@
 
     function findPokemonFromOcr(text) {
       const lines = String(text).split(/\r?\n/).map(normalize).filter(Boolean);
+      const caughtLine = lines.find(line => line.includes("pokemon ") && line.includes(" foi "));
+      if (caughtLine) {
+        const caughtName = caughtLine.match(/pokemon\s+(.+?)\s+foi(?:\s|$)/)?.[1];
+        if (caughtName) {
+          const exactCaught = pokemonList.find(entry =>
+            normalize(entry.label) === caughtName || normalize(goName(entry.pokemon)) === caughtName
+          );
+          if (exactCaught) return exactCaught.pokemon;
+          const closeCaught = pokemonList
+            .map(entry => {
+              const label = normalize(goName(entry.pokemon));
+              const similarity = 1 - levenshtein(caughtName, label) / Math.max(caughtName.length, label.length);
+              return { pokemon: entry.pokemon, similarity };
+            })
+            .sort((a, b) => b.similarity - a.similarity)[0];
+          if (closeCaught?.similarity >= .72) return closeCaught.pokemon;
+        }
+      }
       const isolated = pokemonList
         .filter(entry => {
           const labels = [normalize(entry.label), normalize(goName(entry.pokemon))];
@@ -2179,6 +2198,64 @@
         });
       });
       return best?.pokemon || null;
+    }
+
+    function screenThemeScores(canvas) {
+      const ctx = canvas.getContext("2d", { willReadFrequently: true });
+      const width = canvas.width;
+      const height = Math.max(1, Math.floor(canvas.height * .34));
+      const pixels = ctx.getImageData(0, 0, width, height).data;
+      let cool = 0;
+      let warm = 0;
+      let colored = 0;
+      const step = 4;
+      for (let y = 0; y < height; y += step) {
+        for (let x = 0; x < width; x += step) {
+          const index = (y * width + x) * 4;
+          const r = pixels[index];
+          const g = pixels[index + 1];
+          const b = pixels[index + 2];
+          const max = Math.max(r, g, b);
+          const min = Math.min(r, g, b);
+          if (max < 60 || max - min < 25) continue;
+          colored++;
+          if (b > r * 1.18 && (g > r * 1.05 || b > g * 1.05)) cool++;
+          if (r > b * 1.2 && r > g * 1.08) warm++;
+        }
+      }
+      return {
+        cool: cool / Math.max(colored, 1),
+        warm: warm / Math.max(colored, 1)
+      };
+    }
+
+    function resolvePokemonForm(pokemon, text, canvas) {
+      if (!pokemon) return null;
+      const baseName = normalize(goName(pokemon));
+      const variants = pokemonList
+        .map(entry => entry.pokemon)
+        .filter(candidate => pokemon.dexNr && candidate.dexNr === pokemon.dexNr);
+      if (variants.length < 2) return pokemon;
+      const normalizedText = normalize(text);
+      const regionalHints = [
+        { words: ["alola", "alolan"], form: "alola" },
+        { words: ["galar", "galarian"], form: "galar" },
+        { words: ["hisui", "hisuian"], form: "hisui" },
+        { words: ["paldea", "paldean"], form: "paldea" }
+      ];
+      for (const hint of regionalHints) {
+        if (!hint.words.some(word => normalizedText.includes(word))) continue;
+        const matched = variants.find(candidate => normalize(candidate.formId).includes(hint.form));
+        if (matched) return matched;
+      }
+      if (baseName === "ninetales") {
+        const theme = screenThemeScores(canvas);
+        const alolan = variants.find(candidate => normalize(candidate.formId).includes("alola"));
+        const normal = variants.find(candidate => !normalize(candidate.formId).includes("alola"));
+        if (alolan && theme.cool > .18 && theme.cool > theme.warm * 1.8) return alolan;
+        if (normal && theme.warm > .18 && theme.warm > theme.cool * 1.8) return normal;
+      }
+      return pokemon;
     }
 
     function parseCpFromOcr(text, allowIsolated = false) {
