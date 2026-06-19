@@ -1949,6 +1949,31 @@
       return canvas;
     }
 
+    function cpOcrCanvas(sourceCanvas) {
+      const cropHeight = Math.max(1, Math.round(sourceCanvas.height * .24));
+      const scale = 2;
+      const canvas = document.createElement("canvas");
+      canvas.width = sourceCanvas.width * scale;
+      canvas.height = cropHeight * scale;
+      const ctx = canvas.getContext("2d", { willReadFrequently: true });
+      ctx.drawImage(sourceCanvas, 0, 0, sourceCanvas.width, cropHeight, 0, 0, canvas.width, canvas.height);
+      const image = ctx.getImageData(0, 0, canvas.width, canvas.height);
+      for (let index = 0; index < image.data.length; index += 4) {
+        const r = image.data[index];
+        const g = image.data[index + 1];
+        const b = image.data[index + 2];
+        const brightness = (r + g + b) / 3;
+        const spread = Math.max(r, g, b) - Math.min(r, g, b);
+        const text = brightness > 155 && spread < 75;
+        const value = text ? 0 : 255;
+        image.data[index] = value;
+        image.data[index + 1] = value;
+        image.data[index + 2] = value;
+      }
+      ctx.putImageData(image, 0, 0);
+      return canvas;
+    }
+
     function levenshtein(a, b) {
       const previous = Array.from({ length: b.length + 1 }, (_, index) => index);
       for (let i = 1; i <= a.length; i++) {
@@ -1968,6 +1993,14 @@
     }
 
     function findPokemonFromOcr(text) {
+      const lines = String(text).split(/\r?\n/).map(normalize).filter(Boolean);
+      const isolated = pokemonList
+        .filter(entry => {
+          const labels = [normalize(entry.label), normalize(goName(entry.pokemon))];
+          return lines.some(line => labels.includes(line));
+        })
+        .sort((a, b) => normalize(b.label).length - normalize(a.label).length)[0];
+      if (isolated) return isolated.pokemon;
       const normalizedText = normalize(text);
       const exact = pokemonList
         .filter(entry => normalizedText.includes(normalize(entry.label)) || normalizedText.includes(normalize(goName(entry.pokemon))))
@@ -1986,11 +2019,18 @@
       return best?.pokemon || null;
     }
 
-    function parseCpFromOcr(text) {
+    function parseCpFromOcr(text, allowIsolated = false) {
       const direct = String(text).match(/\b(?:PC|CP)\s*[:.]?\s*([0-9][0-9 .]{1,5})/i);
-      if (!direct) return null;
-      const value = Number(direct[1].replace(/\D/g, ""));
-      return value >= 10 && value <= 10000 ? value : null;
+      if (direct) {
+        const value = Number(direct[1].replace(/\D/g, ""));
+        if (value >= 10 && value <= 10000) return value;
+      }
+      if (!allowIsolated) return null;
+      const candidates = [...String(text).matchAll(/\b([0-9]{3,4})\b/g)]
+        .map(match => Number(match[1]))
+        .filter(value => value >= 100 && value <= 10000)
+        .sort((a, b) => b - a);
+      return candidates[0] || null;
     }
 
     function isIvFillPixel(r, g, b) {
@@ -2020,7 +2060,8 @@
         let lastTrackX = -1;
         let trackCount = 0;
         const allowedGap = Math.max(5, Math.round(width * .009));
-        const scanEnd = Math.floor(width * .86);
+        const scanStart = Math.floor(width * .07);
+        const scanEnd = Math.floor(width * .55);
         const finishRun = () => {
           if (startX < 0 || lastTrackX < startX) return;
           const run = { minX: startX, maxX: lastTrackX, count: trackCount };
@@ -2029,7 +2070,7 @@
           lastTrackX = -1;
           trackCount = 0;
         };
-        for (let x = 0; x < scanEnd; x++) {
+        for (let x = scanStart; x < scanEnd; x++) {
           const index = (y * width + x) * 4;
           if (isIvTrackPixel(pixels[index], pixels[index + 1], pixels[index + 2])) {
             if (startX < 0) startX = x;
@@ -2133,10 +2174,15 @@
           }
         });
         const recognition = await worker.recognize(canvas);
+        await worker.setParameters({
+          tessedit_char_whitelist: "PCpc0123456789 ",
+          tessedit_pageseg_mode: "11"
+        });
+        const cpRecognition = await worker.recognize(cpOcrCanvas(canvas));
         await worker.terminate();
         const text = recognition.data?.text || "";
         const pokemon = findPokemonFromOcr(text);
-        const cp = parseCpFromOcr(text);
+        const cp = parseCpFromOcr(text) || parseCpFromOcr(cpRecognition.data?.text || "", true);
         const member = evaluatorMembers[targetSlot];
         if (pokemon) setEvaluatorPokemon(targetSlot, pokemon, false);
         if (cp) member.cp = cp;
